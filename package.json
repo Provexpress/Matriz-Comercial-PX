@@ -4,13 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node server/index.js",
-    "start": "node server/index.js",
     "dataverse:plan": "node scripts/setup-dataverse.js --dry-run",
     "dataverse:setup": "node scripts/setup-dataverse.js"
   },
   "dependencies": {
-    "@azure/msal-node": "^5.1.5",
-    "express": "^5.2.1"
+    "@azure/msal-node": "^5.1.5"
   }
 }

@@ -48,6 +48,36 @@ const ratioFields = new Set([
 
 const storageKey = "matriz-comercial-px-empty-inputs";
 const fields = {};
+let msalApp = null;
+let currentAccount = null;
+let matrixEntitySetName = null;
+
+const dataverseConfig = {
+  environmentUrl: "https://db-px.crm2.dynamics.com",
+  tenantId: "e6805558-f5bb-444c-8af2-5f3a4d6dd3fc",
+  clientId: "ffcf61c2-18a2-4be4-a753-c81934026e4d",
+  tableLogicalName: "px_matrizcomercial"
+};
+
+const estadoValues = {
+  borrador: 100000000,
+  enRevision: 100000001,
+  aprobada: 100000002,
+  rechazada: 100000003,
+  ganada: 100000004,
+  perdida: 100000005,
+  cerrada: 100000006
+};
+
+const faseValues = {
+  evaluacion: 100000000,
+  cotizacion: 100000001,
+  negociacion: 100000002,
+  ordenCompra: 100000003,
+  facturacion: 100000004,
+  entrega: 100000005,
+  cierre: 100000006
+};
 
 const currency = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -73,6 +103,99 @@ let state = readState();
 
 function asRate(value) {
   return Number(value || 0) / 100;
+}
+
+function getAuthRedirectUri() {
+  const origin = window.location.origin || "";
+  let path = window.location.pathname || "/";
+  path = path.split("?")[0].split("#")[0];
+  if (path.endsWith("/index.html")) path = path.slice(0, -"/index.html".length) || "/";
+  if (!path.endsWith("/")) path += "/";
+  return origin + path;
+}
+
+function initMsal() {
+  if (typeof msal === "undefined") {
+    throw new Error("MSAL no esta disponible");
+  }
+
+  if (msalApp) return msalApp;
+
+  msalApp = new msal.PublicClientApplication({
+    auth: {
+      clientId: dataverseConfig.clientId,
+      authority: `https://login.microsoftonline.com/${dataverseConfig.tenantId}`,
+      redirectUri: getAuthRedirectUri()
+    },
+    cache: { cacheLocation: "sessionStorage" }
+  });
+
+  return msalApp;
+}
+
+async function getDataverseToken() {
+  const app = initMsal();
+  const scopes = [`${dataverseConfig.environmentUrl}/user_impersonation`];
+  currentAccount = app.getAllAccounts()[0] || currentAccount;
+
+  if (!currentAccount) {
+    const login = await app.loginPopup({ scopes });
+    currentAccount = login.account;
+  }
+
+  try {
+    const result = await app.acquireTokenSilent({ scopes, account: currentAccount });
+    return result.accessToken;
+  } catch {
+    const result = await app.acquireTokenPopup({ scopes, account: currentAccount });
+    currentAccount = result.account;
+    return result.accessToken;
+  }
+}
+
+async function connectMicrosoft() {
+  await getDataverseToken();
+  const label = document.querySelector("#loginBtn span");
+  if (label && currentAccount) label.textContent = currentAccount.name || currentAccount.username || "Conectado";
+}
+
+async function dataverseRequest(method, relativeUrl, body, extraHeaders = {}) {
+  const token = await getDataverseToken();
+  const url = new URL(relativeUrl, `${dataverseConfig.environmentUrl}/api/data/v9.2/`);
+  const response = await fetch(url, {
+    method,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "Content-Type": "application/json; charset=utf-8",
+      "OData-MaxVersion": "4.0",
+      "OData-Version": "4.0",
+      ...extraHeaders
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+
+  if (response.status === 204) return null;
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+
+  if (!response.ok) {
+    throw new Error(data?.error?.message || "Error consultando Dataverse");
+  }
+
+  return data;
+}
+
+async function getMatrixEntitySetName() {
+  if (matrixEntitySetName) return matrixEntitySetName;
+
+  const data = await dataverseRequest(
+    "GET",
+    `EntityDefinitions(LogicalName='${dataverseConfig.tableLogicalName}')?$select=EntitySetName`
+  );
+  matrixEntitySetName = data.EntitySetName;
+  return matrixEntitySetName;
 }
 
 function calculate() {
@@ -122,6 +245,16 @@ function formatValue(key, value) {
   if (percentFields.has(key)) return percent.format(asRate(value));
   if (ratioFields.has(key)) return percent.format(Number(value || 0));
   return new Intl.NumberFormat("es-CO").format(Number(value || 0));
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#039;"
+  }[char]));
 }
 
 function saveState() {
@@ -211,14 +344,6 @@ function renderMatrices(rows) {
     return;
   }
 
-  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#039;"
-  }[char]));
-
   tbody.innerHTML = rows.map((row) => `
     <tr>
       <td>${escapeHtml(row.consecutivo)}</td>
@@ -237,12 +362,69 @@ async function loadMatrices() {
   if (tbody) tbody.innerHTML = `<tr><td colspan="7">Cargando...</td></tr>`;
 
   try {
-    const response = await fetch("/api/matrices");
-    if (!response.ok) throw new Error("No fue posible cargar matrices");
-    renderMatrices(await response.json());
+    const entitySet = await getMatrixEntitySetName();
+    const query = [
+      "$select=px_matrizcomercialid,px_consecutivo,px_cliente,px_responsable,px_fechasolicitud,px_estado,px_fase,px_valorventa,px_valorfacturar,px_utilidadbruta",
+      "$orderby=createdon desc",
+      "$top=25"
+    ].join("&");
+    const data = await dataverseRequest("GET", `${entitySet}?${query}`, null, {
+      Prefer: 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'
+    });
+    renderMatrices(data.value.map(toMatrixRow));
   } catch (error) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="7">${error.message}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
   }
+}
+
+function toMatrixRow(row) {
+  return {
+    id: row.px_matrizcomercialid,
+    consecutivo: row.px_consecutivo,
+    cliente: row.px_cliente,
+    responsable: row.px_responsable,
+    fechaSolicitud: row.px_fechasolicitud,
+    estado: row["px_estado@OData.Community.Display.V1.FormattedValue"] ?? row.px_estado,
+    fase: row["px_fase@OData.Community.Display.V1.FormattedValue"] ?? row.px_fase,
+    valorVenta: row.px_valorventa,
+    valorFacturar: row.px_valorfacturar,
+    utilidadBruta: row.px_utilidadbruta
+  };
+}
+
+async function nextConsecutive(entitySet) {
+  const year = new Date().getFullYear();
+  const prefix = `MX-${year}-`;
+  const data = await dataverseRequest(
+    "GET",
+    `${entitySet}?$select=px_consecutivo&$filter=startswith(px_consecutivo,'${prefix}')&$orderby=px_consecutivo desc&$top=1`
+  );
+  const last = data.value?.[0]?.px_consecutivo;
+  const next = last ? Number(String(last).split("-").at(-1)) + 1 : 1;
+  return `${prefix}${String(next).padStart(4, "0")}`;
+}
+
+function buildDataversePayload(input) {
+  const result = calculate();
+  return {
+    px_cliente: input.cliente || "",
+    px_responsable: input.responsable || currentAccount?.name || currentAccount?.username || "",
+    px_fechasolicitud: input.fechaSolicitud || null,
+    px_estado: estadoValues.borrador,
+    px_fase: faseValues.evaluacion,
+    px_hardware: Number(input.hardware || 0),
+    px_obsequios: Number(input.obsequios || 0),
+    px_margenobjetivo: Number(input.margenObjetivo || 0),
+    px_fletes: Number(input.fletes || 0),
+    px_plazocredito: Number(input.plazoCredito || 0),
+    px_totalcostosdirectos: result.totalCostosDirectos,
+    px_valorventa: result.valorVenta,
+    px_ivavalor: result.ivaValor,
+    px_valorfacturar: result.valorFacturar,
+    px_utilidadbruta: result.utilidadBruta,
+    px_margensobrecostos: result.margenSobreCostos,
+    px_margensobreventa: result.margenSobreVenta
+  };
 }
 
 async function saveMatrix() {
@@ -252,19 +434,13 @@ async function saveMatrix() {
   button.querySelector("span").textContent = "Guardando...";
 
   try {
-    const response = await fetch("/api/matrices", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(state)
+    const entitySet = await getMatrixEntitySetName();
+    const consecutivo = await nextConsecutive(entitySet);
+    await dataverseRequest("POST", entitySet, {
+      px_consecutivo: consecutivo,
+      ...buildDataversePayload(state)
     });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || "No fue posible guardar la matriz");
-    }
-
-    const result = await response.json();
-    document.querySelector("#saveState").textContent = `Guardada ${result.consecutivo}`;
+    document.querySelector("#saveState").textContent = `Guardada ${consecutivo}`;
     await loadMatrices();
   } catch (error) {
     document.querySelector("#saveState").textContent = error.message;
@@ -282,6 +458,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#exportBtn").addEventListener("click", exportTable);
   document.querySelector("#saveMatrixBtn").addEventListener("click", saveMatrix);
   document.querySelector("#refreshMatricesBtn").addEventListener("click", loadMatrices);
-  loadMatrices();
+  document.querySelector("#loginBtn").addEventListener("click", connectMicrosoft);
   if (window.lucide) window.lucide.createIcons();
 });

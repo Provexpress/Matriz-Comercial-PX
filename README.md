@@ -4,7 +4,7 @@ Aplicacion web estatica para evaluar proyectos comerciales de Provexpress.
 
 ## Uso
 
-Abre `index.html` en el navegador. La matriz calcula automaticamente:
+Publica o abre la app desde un origen web permitido. La matriz calcula automaticamente:
 
 - Costos directos del proyecto.
 - Valor de venta antes de IVA.
@@ -12,7 +12,7 @@ Abre `index.html` en el navegador. La matriz calcula automaticamente:
 - Comision, impuestos, fletes, imprevistos y financiacion.
 - Utilidad bruta y margenes Provexpress.
 
-Los cambios se guardan en el navegador. Tambien puedes imprimir o exportar la tabla a un archivo `.xls`.
+Los cambios se guardan localmente mientras se edita. Con Microsoft 365 conectado tambien puede guardar y listar matrices en Dataverse. Tambien puedes imprimir o exportar la tabla a un archivo `.xls`.
 
 ## Dataverse
 
@@ -50,18 +50,27 @@ npm run dataverse:setup
 
 El script abre un inicio de sesion por codigo de dispositivo. La App Registration debe tener permiso delegado de Dataverse `user_impersonation`.
 
-## Desarrollo local
+## Publicacion
 
-Para correr la app con API local:
+La app esta pensada para GitHub Pages: no requiere backend Node para operar. El navegador usa MSAL y llama directamente la Dataverse Web API con la sesion del usuario.
 
-```powershell
-npm run dev
-```
-
-Abre:
+La App Registration debe tener estos redirect URI como SPA, segun donde se publique:
 
 ```text
-http://localhost:3000
+https://provexpress.github.io/Matriz-Comercial-PX/
+http://localhost:5500/
 ```
 
-La primera consulta a Dataverse muestra un codigo de dispositivo en la terminal. Completa ese login con la cuenta corporativa y luego la app podra listar y crear matrices.
+Tambien debe tener permiso delegado:
+
+```text
+Dynamics CRM / Dataverse: user_impersonation
+```
+
+Para probar localmente, usa un servidor estatico, no abras el archivo con `file://`. Por ejemplo:
+
+```powershell
+npx serve . -l 5500
+```
+
+El consecutivo se calcula consultando el ultimo registro `MX-AAAA-0000`. Para uso intensivo conviene cambiar `Consecutivo` a autonumeracion de Dataverse y evitar duplicados si dos usuarios guardan al mismo tiempo.
