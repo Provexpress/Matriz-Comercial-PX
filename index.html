@@ -6,7 +6,7 @@
     <title>Matriz Comercial PX</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
-    <script src="app.js?v=20260430-phases1" defer></script>
+    <script src="app.js?v=20260430-phase-form1" defer></script>
   </head>
   <body>
     <main class="app-shell">
@@ -66,6 +66,14 @@
         <label>
           <span>Responsable</span>
           <input id="responsable" type="text" placeholder="Comercial" />
+        </label>
+        <label>
+          <span>Fase del producto</span>
+          <select id="fase">
+            <option value="100000000">Solicitud de credito</option>
+            <option value="100000001">Oferta</option>
+            <option value="100000006">Cierre</option>
+          </select>
         </label>
       </section>
 

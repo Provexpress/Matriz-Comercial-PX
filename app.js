@@ -2,6 +2,7 @@ const defaults = {
   fechaSolicitud: "",
   cliente: "",
   responsable: "",
+  fase: "100000000",
   hardware: "",
   obsequios: "",
   margenObjetivo: "",
@@ -48,6 +49,7 @@ const ratioFields = new Set([
 
 const storageKey = "matriz-comercial-px-empty-inputs";
 const fields = {};
+const textFields = ["fechaSolicitud", "cliente", "responsable", "fase"];
 let msalApp = null;
 let currentAccount = null;
 let matrixEntitySetName = null;
@@ -328,7 +330,7 @@ function bindInputs() {
     });
   });
 
-  ["fechaSolicitud", "cliente", "responsable"].forEach((id) => {
+  textFields.forEach((id) => {
     const input = document.querySelector(`#${id}`);
     input.value = state[id] ?? "";
     input.addEventListener("input", () => {
@@ -343,7 +345,7 @@ function resetValues() {
   Object.entries(fields).forEach(([key, input]) => {
     input.value = state[key];
   });
-  ["fechaSolicitud", "cliente", "responsable"].forEach((id) => {
+  textFields.forEach((id) => {
     document.querySelector(`#${id}`).value = state[id] ?? "";
   });
   render();
@@ -472,7 +474,7 @@ function buildDataversePayload(input) {
     px_responsable: input.responsable || currentAccount?.name || currentAccount?.username || "",
     px_fechasolicitud: input.fechaSolicitud || null,
     px_estado: estadoValues.borrador,
-    px_fase: faseValues.solicitudCredito,
+    px_fase: Number(input.fase || faseValues.solicitudCredito),
     px_hardware: Number(input.hardware || 0),
     px_obsequios: Number(input.obsequios || 0),
     px_margenobjetivo: Number(input.margenObjetivo || 0),
