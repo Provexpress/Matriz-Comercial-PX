@@ -190,6 +190,7 @@ async function connectMicrosoft() {
   await getDataverseToken();
   const label = document.querySelector("#loginBtn span");
   if (label && currentAccount) label.textContent = currentAccount.name || currentAccount.username || "Conectado";
+  await loadMatrices();
 }
 
 async function dataverseRequest(method, relativeUrl, body, extraHeaders = {}) {
@@ -347,6 +348,24 @@ function resetValues() {
   saveState();
 }
 
+function switchView(target) {
+  const isEvaluation = target === "evaluationView";
+  document.querySelector("#recordsView").classList.toggle("active", !isEvaluation);
+  document.querySelector("#evaluationView").classList.toggle("active", isEvaluation);
+  document.querySelector("#evaluationViewContent").classList.toggle("active", isEvaluation);
+  document.body.classList.toggle("app-mode-records", !isEvaluation);
+  document.body.classList.toggle("app-mode-evaluation", isEvaluation);
+
+  document.querySelectorAll("[data-view-target]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.viewTarget === target);
+  });
+}
+
+function startNewMatrix() {
+  resetValues();
+  switchView("evaluationView");
+}
+
 function exportTable() {
   const projectRows = `
     <tr><th>Fecha solicitud</th><td>${state.fechaSolicitud || ""}</td></tr>
@@ -475,6 +494,7 @@ async function saveMatrix() {
     });
     document.querySelector("#saveState").textContent = `Guardada ${consecutivo}`;
     await loadMatrices();
+    switchView("recordsView");
   } catch (error) {
     document.querySelector("#saveState").textContent = error.message;
   } finally {
@@ -492,5 +512,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#saveMatrixBtn").addEventListener("click", saveMatrix);
   document.querySelector("#refreshMatricesBtn").addEventListener("click", loadMatrices);
   document.querySelector("#loginBtn").addEventListener("click", connectMicrosoft);
+  document.querySelector("#newMatrixBtn").addEventListener("click", startNewMatrix);
+  document.querySelectorAll("[data-view-target]").forEach((button) => {
+    button.addEventListener("click", () => switchView(button.dataset.viewTarget));
+  });
+  switchView("recordsView");
   if (window.lucide) window.lucide.createIcons();
 });

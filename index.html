@@ -6,7 +6,7 @@
     <title>Matriz Comercial PX</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
-    <script src="app.js?v=20260430-msal2" defer></script>
+    <script src="app.js?v=20260430-views1" defer></script>
   </head>
   <body>
     <main class="app-shell">
@@ -19,19 +19,19 @@
           </div>
         </div>
         <div class="actions" aria-label="Acciones del formato">
-          <button class="icon-button" type="button" id="resetBtn" title="Restablecer valores">
+          <button class="icon-button eval-action" type="button" id="resetBtn" title="Restablecer valores">
             <i data-lucide="rotate-ccw"></i>
             <span>Restablecer</span>
           </button>
-          <button class="icon-button" type="button" id="printBtn" title="Imprimir o guardar PDF">
+          <button class="icon-button eval-action" type="button" id="printBtn" title="Imprimir o guardar PDF">
             <i data-lucide="printer"></i>
             <span>Imprimir</span>
           </button>
-          <button class="primary-button" type="button" id="exportBtn" title="Exportar tabla a Excel">
+          <button class="primary-button eval-action" type="button" id="exportBtn" title="Exportar tabla a Excel">
             <i data-lucide="file-spreadsheet"></i>
             <span>Exportar</span>
           </button>
-          <button class="primary-button" type="button" id="saveMatrixBtn" title="Guardar matriz en Dataverse">
+          <button class="primary-button eval-action" type="button" id="saveMatrixBtn" title="Guardar matriz en Dataverse">
             <i data-lucide="save"></i>
             <span>Guardar matriz</span>
           </button>
@@ -42,6 +42,18 @@
         </div>
       </header>
 
+      <nav class="view-tabs" aria-label="Vistas principales">
+        <button class="tab-button active" type="button" data-view-target="recordsView">
+          <i data-lucide="list-checks"></i>
+          <span>Matrices</span>
+        </button>
+        <button class="tab-button" type="button" data-view-target="evaluationView">
+          <i data-lucide="calculator"></i>
+          <span>Evaluacion</span>
+        </button>
+      </nav>
+
+      <section class="app-view" id="evaluationView">
       <section class="project-strip" aria-label="Información del proyecto">
         <label>
           <span>Fecha solicitud</span>
@@ -57,16 +69,25 @@
         </label>
       </section>
 
+      </section>
+
+      <section class="app-view active" id="recordsView">
       <section class="records-panel" aria-label="Matrices creadas">
         <div class="records-heading">
           <div>
             <p class="eyebrow">Dataverse</p>
             <h2>Matrices recientes</h2>
           </div>
-          <button class="icon-button" type="button" id="refreshMatricesBtn" title="Actualizar listado">
-            <i data-lucide="refresh-cw"></i>
-            <span>Actualizar</span>
-          </button>
+          <div class="records-actions">
+            <button class="icon-button" type="button" id="newMatrixBtn" title="Crear nueva matriz">
+              <i data-lucide="plus"></i>
+              <span>Nueva matriz</span>
+            </button>
+            <button class="icon-button" type="button" id="refreshMatricesBtn" title="Actualizar listado">
+              <i data-lucide="refresh-cw"></i>
+              <span>Actualizar</span>
+            </button>
+          </div>
         </div>
         <div class="records-table-wrap">
           <table class="records-table">
@@ -87,7 +108,9 @@
           </table>
         </div>
       </section>
+      </section>
 
+      <section class="app-view" id="evaluationViewContent">
       <section class="summary-grid" aria-label="Resultados principales">
         <article class="metric">
           <span>Total costos directos</span>

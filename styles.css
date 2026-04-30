@@ -107,6 +107,54 @@ h3 {
   gap: 10px;
 }
 
+.view-tabs {
+  display: inline-flex;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.tab-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.tab-button.active {
+  color: #fff;
+  background: var(--purple);
+}
+
+.tab-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.app-view {
+  display: none;
+}
+
+.app-view.active {
+  display: block;
+}
+
+.app-mode-records .eval-action {
+  display: none;
+}
+
 .icon-button,
 .primary-button {
   display: inline-flex;
@@ -197,6 +245,13 @@ input:focus {
   gap: 16px;
   padding: 16px;
   border-bottom: 1px solid var(--line);
+}
+
+.records-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .records-table-wrap {
@@ -408,6 +463,7 @@ th:last-child {
   .topbar,
   .project-strip,
   .records-heading,
+  .view-tabs,
   .summary-grid {
     grid-template-columns: 1fr;
   }
@@ -419,8 +475,16 @@ th:last-child {
 
   .actions,
   .actions button,
+  .records-actions,
+  .records-actions button,
+  .view-tabs,
+  .tab-button,
   .records-heading button {
     width: 100%;
+  }
+
+  .view-tabs {
+    display: grid;
   }
 
   .summary-grid {
