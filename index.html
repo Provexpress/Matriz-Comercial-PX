@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Matriz Comercial PX</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <img src="assets/provex-logo.jpeg" alt="Provexpress" />
+          <div>
+            <p class="eyebrow">COM-F-XXX</p>
+            <h1>Evaluación de proyectos</h1>
+          </div>
+        </div>
+        <div class="actions" aria-label="Acciones del formato">
+          <button class="icon-button" type="button" id="resetBtn" title="Restablecer valores">
+            <i data-lucide="rotate-ccw"></i>
+            <span>Restablecer</span>
+          </button>
+          <button class="icon-button" type="button" id="printBtn" title="Imprimir o guardar PDF">
+            <i data-lucide="printer"></i>
+            <span>Imprimir</span>
+          </button>
+          <button class="primary-button" type="button" id="exportBtn" title="Exportar tabla a Excel">
+            <i data-lucide="file-spreadsheet"></i>
+            <span>Exportar</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="project-strip" aria-label="Información del proyecto">
+        <label>
+          <span>Fecha solicitud</span>
+          <input id="fechaSolicitud" type="date" />
+        </label>
+        <label>
+          <span>Cliente</span>
+          <input id="cliente" type="text" placeholder="Nombre del cliente" />
+        </label>
+        <label>
+          <span>Responsable</span>
+          <input id="responsable" type="text" placeholder="Comercial" />
+        </label>
+      </section>
+
+      <section class="summary-grid" aria-label="Resultados principales">
+        <article class="metric">
+          <span>Total costos directos</span>
+          <strong id="kpiCostosDirectos">$0</strong>
+        </article>
+        <article class="metric accent">
+          <span>Valor venta antes de IVA</span>
+          <strong id="kpiVenta">$0</strong>
+        </article>
+        <article class="metric">
+          <span>Valor a facturar</span>
+          <strong id="kpiFacturar">$0</strong>
+        </article>
+        <article class="metric profit">
+          <span>Utilidad bruta Provexpress</span>
+          <strong id="kpiUtilidad">$0</strong>
+        </article>
+      </section>
+
+      <section class="workbench">
+        <aside class="control-panel" aria-label="Variables editables">
+          <div class="panel-heading">
+            <p class="eyebrow">Variables</p>
+            <h2>Entradas de evaluación</h2>
+          </div>
+
+          <div class="input-group">
+            <h3>Costos directos</h3>
+            <label>
+              <span>Productos físicos Hardware</span>
+              <input data-field="hardware" type="number" min="0" step="1000" />
+            </label>
+            <label>
+              <span>Servicios</span>
+              <input data-field="servicios" type="number" min="0" step="1000" />
+            </label>
+            <label>
+              <span>Licenciamientos</span>
+              <input data-field="licenciamientos" type="number" min="0" step="1000" />
+            </label>
+            <label>
+              <span>Obsequios</span>
+              <input data-field="obsequios" type="number" min="0" step="1000" />
+            </label>
+          </div>
+
+          <div class="input-group">
+            <h3>Porcentajes y costos internos</h3>
+            <label>
+              <span>Margen objetivo</span>
+              <input data-field="margenObjetivo" type="number" min="0" max="95" step="0.01" />
+            </label>
+            <label>
+              <span>IVA aplicable</span>
+              <input data-field="iva" type="number" min="0" max="100" step="0.01" />
+            </label>
+            <label>
+              <span>Comisión comercial</span>
+              <input data-field="comision" type="number" min="0" max="100" step="0.01" />
+            </label>
+            <label>
+              <span>Impuestos estimados</span>
+              <input data-field="impuestos" type="number" min="0" max="100" step="0.01" />
+            </label>
+            <label>
+              <span>Costo fletes</span>
+              <input data-field="fletes" type="number" min="0" step="1000" />
+            </label>
+            <label>
+              <span>Imprevistos estimados</span>
+              <input data-field="imprevistos" type="number" min="0" max="100" step="0.0001" />
+            </label>
+            <label>
+              <span>Plazo crédito cliente en días</span>
+              <input data-field="plazoCredito" type="number" min="0" step="1" />
+            </label>
+            <label>
+              <span>Base financiación mensual</span>
+              <input data-field="baseFinanciacion" type="number" min="0" max="100" step="0.01" />
+            </label>
+          </div>
+        </aside>
+
+        <section class="sheet-panel" aria-label="Formato de evaluación">
+          <div class="sheet-toolbar">
+            <div>
+              <p class="eyebrow">Consolidado</p>
+              <h2>Formato funcional</h2>
+            </div>
+            <span id="saveState">Cambios guardados</span>
+          </div>
+
+          <div class="sheet-wrap">
+            <table id="evaluationTable">
+              <thead>
+                <tr>
+                  <th>Concepto</th>
+                  <th>Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="section-row"><th colspan="2">Costos Directos del Proyecto</th></tr>
+                <tr class="editable-row"><td>Productos físicos Hardware</td><td data-out="hardware"></td></tr>
+                <tr class="editable-row"><td>Servicios</td><td data-out="servicios"></td></tr>
+                <tr class="editable-row"><td>Licenciamientos</td><td data-out="licenciamientos"></td></tr>
+                <tr class="editable-row"><td>Obsequios</td><td data-out="obsequios"></td></tr>
+                <tr class="total-row"><td>Total Costos Directos del Proyecto</td><td data-out="totalCostosDirectos"></td></tr>
+                <tr class="editable-row"><td>% Margen Objetivo</td><td data-out="margenObjetivo"></td></tr>
+                <tr class="accent-row"><td>Utilidad esperada antes de gastos internos</td><td data-out="utilidadEsperada"></td></tr>
+                <tr class="total-row"><td>Valor de venta del Proyecto Antes de IVA</td><td data-out="valorVenta"></td></tr>
+                <tr><td>% IVA aplicable</td><td data-out="iva"></td></tr>
+                <tr><td>IVA</td><td data-out="ivaValor"></td></tr>
+                <tr class="total-row"><td>Valor a Facturar</td><td data-out="valorFacturar"></td></tr>
+                <tr class="section-row"><th colspan="2">Costos Internos</th></tr>
+                <tr><td>% Comisión de Ventas del comercial</td><td data-out="comision"></td></tr>
+                <tr><td>Comisión estimada del Comercial incluida carga prestacional</td><td data-out="comisionValor"></td></tr>
+                <tr><td>% Impuestos estimados de evaluación</td><td data-out="impuestos"></td></tr>
+                <tr><td>Valor impuestos estimados sobre valor de venta</td><td data-out="impuestosValor"></td></tr>
+                <tr class="editable-row"><td>Costo fletes</td><td data-out="fletes"></td></tr>
+                <tr><td>% Imprevistos estimados</td><td data-out="imprevistos"></td></tr>
+                <tr><td>Valor Imprevistos estimados</td><td data-out="imprevistosValor"></td></tr>
+                <tr class="editable-row"><td>Plazo de Crédito al cliente en días</td><td data-out="plazoCredito"></td></tr>
+                <tr><td>% Base de financiación mensual</td><td data-out="baseFinanciacion"></td></tr>
+                <tr><td>% de financiación ligado al plazo</td><td data-out="financiacionPorcentaje"></td></tr>
+                <tr><td>Costo de financiación para evaluación</td><td data-out="financiacionValor"></td></tr>
+                <tr class="total-row"><td>Total Costos internos del proyecto</td><td data-out="totalCostosInternos"></td></tr>
+                <tr class="accent-row final"><td>Utilidad Bruta Provexpress</td><td data-out="utilidadBruta"></td></tr>
+                <tr><td>% Margen Bruto Provexpress sobre costos</td><td data-out="margenSobreCostos"></td></tr>
+                <tr class="accent-row"><td>% Margen Bruto Provexpress sobre Valor de Venta</td><td data-out="margenSobreVenta"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,420 @@
+:root {
+  --ink: #172033;
+  --muted: #6a7283;
+  --line: #dfe5ef;
+  --paper: #ffffff;
+  --panel: #f7f9fc;
+  --blue: #0070c0;
+  --blue-dark: #144b82;
+  --purple: #7030a0;
+  --purple-dark: #3f1f73;
+  --success: #16815a;
+  --danger: #bd2f45;
+  --shadow: 0 18px 42px rgba(23, 32, 51, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  color: var(--ink);
+  background: var(--panel);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  width: min(1500px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 40px;
+}
+
+.topbar,
+.project-strip,
+.control-panel,
+.sheet-panel,
+.metric {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 92px;
+  padding: 18px 20px;
+  border-radius: 8px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 16px;
+}
+
+.brand img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--purple);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: clamp(1.4rem, 2.3vw, 2.35rem);
+  line-height: 1.05;
+}
+
+h2 {
+  font-size: 1.1rem;
+}
+
+h3 {
+  padding-bottom: 10px;
+  font-size: 0.94rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.icon-button,
+.primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  background: #fff;
+  cursor: pointer;
+}
+
+.primary-button {
+  border-color: var(--purple);
+  color: #fff;
+  background: var(--purple);
+}
+
+.icon-button:hover,
+.primary-button:hover {
+  transform: translateY(-1px);
+}
+
+button svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.project-strip {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.65fr) 1.4fr 1fr;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+label span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+}
+
+input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0, 112, 192, 0.16);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.metric {
+  min-height: 112px;
+  padding: 18px;
+  border-radius: 8px;
+}
+
+.metric span {
+  display: block;
+  min-height: 36px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.metric strong {
+  display: block;
+  margin-top: 12px;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  line-height: 1;
+}
+
+.metric.accent {
+  border-color: rgba(112, 48, 160, 0.35);
+}
+
+.metric.profit strong {
+  color: var(--success);
+}
+
+.metric.profit.negative strong {
+  color: var(--danger);
+}
+
+.workbench {
+  display: grid;
+  grid-template-columns: 380px minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  align-items: start;
+}
+
+.control-panel,
+.sheet-panel {
+  border-radius: 8px;
+}
+
+.control-panel {
+  position: sticky;
+  top: 16px;
+  padding: 18px;
+}
+
+.panel-heading {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.input-group {
+  display: grid;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.input-group:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.sheet-panel {
+  overflow: hidden;
+}
+
+.sheet-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+#saveState {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.sheet-wrap {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+th,
+td {
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: #fff;
+  background: var(--purple);
+  text-align: center;
+}
+
+td:last-child,
+th:last-child {
+  width: 270px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.section-row th {
+  color: var(--ink);
+  background: #edf3fa;
+  font-size: 1.05rem;
+  text-align: center;
+}
+
+.editable-row td {
+  background: rgba(0, 112, 192, 0.1);
+}
+
+.total-row td {
+  font-size: 1.02rem;
+  font-weight: 800;
+  background: #fbfcff;
+}
+
+.accent-row td {
+  color: #fff;
+  background: var(--purple);
+  font-weight: 800;
+}
+
+.accent-row.final td {
+  font-size: 1.12rem;
+}
+
+@media (max-width: 1040px) {
+  .summary-grid,
+  .workbench,
+  .project-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sheet-panel {
+    grid-column: 1 / -1;
+  }
+
+  .control-panel {
+    position: static;
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    width: min(100% - 20px, 1500px);
+    padding-top: 10px;
+  }
+
+  .topbar,
+  .project-strip,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .actions,
+  .actions button {
+    width: 100%;
+  }
+
+  .summary-grid {
+    display: grid;
+  }
+
+  .metric {
+    min-height: auto;
+  }
+
+  th,
+  td {
+    padding: 10px;
+  }
+
+  td:last-child,
+  th:last-child {
+    width: 150px;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  .app-shell {
+    width: 100%;
+    padding: 0;
+  }
+
+  .actions,
+  .control-panel {
+    display: none;
+  }
+
+  .topbar,
+  .project-strip,
+  .metric,
+  .sheet-panel {
+    box-shadow: none;
+  }
+
+  .workbench {
+    display: block;
+  }
+}
