@@ -133,7 +133,34 @@ function initMsal() {
   return msalApp;
 }
 
+function loadMsal() {
+  if (typeof msal !== "undefined") return Promise.resolve();
+
+  const sources = [
+    "https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js",
+    "https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"
+  ];
+
+  return new Promise((resolve, reject) => {
+    const loadSource = (index) => {
+      if (!sources[index]) {
+        reject(new Error("No se pudo cargar la libreria de autenticacion Microsoft"));
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = sources[index];
+      script.onload = () => resolve();
+      script.onerror = () => loadSource(index + 1);
+      document.head.appendChild(script);
+    };
+
+    loadSource(0);
+  });
+}
+
 async function getDataverseToken() {
+  await loadMsal();
   const app = initMsal();
   const scopes = [`${dataverseConfig.environmentUrl}/user_impersonation`];
   currentAccount = app.getAllAccounts()[0] || currentAccount;
