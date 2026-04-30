@@ -32,7 +32,7 @@
           "displayName": "Fase",
           "schemaName": "px_Fase",
           "type": "choice",
-          "options": ["Evaluacion", "Cotizacion", "Negociacion", "Orden de compra", "Facturacion", "Entrega", "Cierre"]
+          "options": ["Solicitud de credito", "Oferta", "Cierre"]
         },
         { "displayName": "Hardware", "schemaName": "px_Hardware", "type": "currency" },
         { "displayName": "Obsequios", "schemaName": "px_Obsequios", "type": "currency" },

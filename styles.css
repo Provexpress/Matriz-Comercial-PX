@@ -26,7 +26,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -221,6 +222,23 @@ input {
 }
 
 input:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0, 112, 192, 0.16);
+}
+
+.phase-select {
+  width: 100%;
+  min-width: 170px;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+}
+
+.phase-select:focus {
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(0, 112, 192, 0.16);
 }

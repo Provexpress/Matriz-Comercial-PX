@@ -70,13 +70,15 @@ const estadoValues = {
 };
 
 const faseValues = {
-  evaluacion: 100000000,
-  cotizacion: 100000001,
-  negociacion: 100000002,
-  ordenCompra: 100000003,
-  facturacion: 100000004,
-  entrega: 100000005,
+  solicitudCredito: 100000000,
+  oferta: 100000001,
   cierre: 100000006
+};
+
+const faseLabels = {
+  [faseValues.solicitudCredito]: "Solicitud de credito",
+  [faseValues.oferta]: "Oferta",
+  [faseValues.cierre]: "Cierre"
 };
 
 const currency = new Intl.NumberFormat("es-CO", {
@@ -397,12 +399,18 @@ function renderMatrices(rows) {
   }
 
   tbody.innerHTML = rows.map((row) => `
-    <tr>
+    <tr data-id="${escapeHtml(row.id)}">
       <td>${escapeHtml(row.consecutivo)}</td>
       <td>${escapeHtml(row.cliente)}</td>
       <td>${escapeHtml(row.responsable)}</td>
       <td>${escapeHtml(row.estado)}</td>
-      <td>${escapeHtml(row.fase)}</td>
+      <td>
+        <select class="phase-select" data-phase-select data-previous-value="${Number(row.faseValue)}" aria-label="Fase del producto">
+          ${Object.entries(faseLabels).map(([value, label]) => `
+            <option value="${value}" ${Number(row.faseValue) === Number(value) ? "selected" : ""}>${escapeHtml(label)}</option>
+          `).join("")}
+        </select>
+      </td>
       <td>${currency.format(Number(row.valorVenta || 0))}</td>
       <td>${currency.format(Number(row.utilidadBruta || 0))}</td>
     </tr>
@@ -437,7 +445,8 @@ function toMatrixRow(row) {
     responsable: row.px_responsable,
     fechaSolicitud: row.px_fechasolicitud,
     estado: row["px_estado@OData.Community.Display.V1.FormattedValue"] ?? row.px_estado,
-    fase: row["px_fase@OData.Community.Display.V1.FormattedValue"] ?? row.px_fase,
+    fase: faseLabels[row.px_fase] ?? row["px_fase@OData.Community.Display.V1.FormattedValue"] ?? row.px_fase,
+    faseValue: row.px_fase,
     valorVenta: row.px_valorventa,
     valorFacturar: row.px_valorfacturar,
     utilidadBruta: row.px_utilidadbruta
@@ -463,7 +472,7 @@ function buildDataversePayload(input) {
     px_responsable: input.responsable || currentAccount?.name || currentAccount?.username || "",
     px_fechasolicitud: input.fechaSolicitud || null,
     px_estado: estadoValues.borrador,
-    px_fase: faseValues.evaluacion,
+    px_fase: faseValues.solicitudCredito,
     px_hardware: Number(input.hardware || 0),
     px_obsequios: Number(input.obsequios || 0),
     px_margenobjetivo: Number(input.margenObjetivo || 0),
@@ -477,6 +486,34 @@ function buildDataversePayload(input) {
     px_margensobrecostos: result.margenSobreCostos,
     px_margensobreventa: result.margenSobreVenta
   };
+}
+
+async function updateMatrixPhase(recordId, phaseValue) {
+  if (!recordId) throw new Error("No se encontro la matriz para actualizar");
+  const entitySet = await getMatrixEntitySetName();
+  await dataverseRequest("PATCH", `${entitySet}(${recordId})`, {
+    px_fase: Number(phaseValue)
+  });
+}
+
+async function handlePhaseChange(event) {
+  const select = event.target.closest("[data-phase-select]");
+  if (!select) return;
+
+  const row = select.closest("tr");
+  const previousValue = select.dataset.previousValue || select.value;
+  select.disabled = true;
+
+  try {
+    await updateMatrixPhase(row?.dataset.id, select.value);
+    select.dataset.previousValue = select.value;
+    document.querySelector("#saveState").textContent = `Fase actualizada: ${faseLabels[select.value]}`;
+  } catch (error) {
+    select.value = previousValue;
+    document.querySelector("#saveState").textContent = error.message;
+  } finally {
+    select.disabled = false;
+  }
 }
 
 async function saveMatrix() {
@@ -513,6 +550,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#refreshMatricesBtn").addEventListener("click", loadMatrices);
   document.querySelector("#loginBtn").addEventListener("click", connectMicrosoft);
   document.querySelector("#newMatrixBtn").addEventListener("click", startNewMatrix);
+  document.querySelector("#matricesList").addEventListener("change", handlePhaseChange);
   document.querySelectorAll("[data-view-target]").forEach((button) => {
     button.addEventListener("click", () => switchView(button.dataset.viewTarget));
   });

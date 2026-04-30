@@ -11,6 +11,7 @@ Publica o abre la app desde un origen web permitido. La matriz calcula automatic
 - IVA y valor a facturar.
 - Comision, impuestos, fletes, imprevistos y financiacion.
 - Utilidad bruta y margenes Provexpress.
+- Seguimiento de fase del producto: Solicitud de credito, Oferta y Cierre.
 
 Los cambios se guardan localmente mientras se edita. Con Microsoft 365 conectado tambien puede guardar y listar matrices en Dataverse. Tambien puedes imprimir o exportar la tabla a un archivo `.xls`.
 
