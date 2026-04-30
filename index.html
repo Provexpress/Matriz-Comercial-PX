@@ -31,6 +31,10 @@
             <i data-lucide="file-spreadsheet"></i>
             <span>Exportar</span>
           </button>
+          <button class="primary-button" type="button" id="saveMatrixBtn" title="Guardar matriz en Dataverse">
+            <i data-lucide="save"></i>
+            <span>Guardar matriz</span>
+          </button>
         </div>
       </header>
 
@@ -47,6 +51,37 @@
           <span>Responsable</span>
           <input id="responsable" type="text" placeholder="Comercial" />
         </label>
+      </section>
+
+      <section class="records-panel" aria-label="Matrices creadas">
+        <div class="records-heading">
+          <div>
+            <p class="eyebrow">Dataverse</p>
+            <h2>Matrices recientes</h2>
+          </div>
+          <button class="icon-button" type="button" id="refreshMatricesBtn" title="Actualizar listado">
+            <i data-lucide="refresh-cw"></i>
+            <span>Actualizar</span>
+          </button>
+        </div>
+        <div class="records-table-wrap">
+          <table class="records-table">
+            <thead>
+              <tr>
+                <th>Consecutivo</th>
+                <th>Cliente</th>
+                <th>Responsable</th>
+                <th>Estado</th>
+                <th>Fase</th>
+                <th>Valor venta</th>
+                <th>Utilidad</th>
+              </tr>
+            </thead>
+            <tbody id="matricesList">
+              <tr><td colspan="7">Sin datos cargados</td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section class="summary-grid" aria-label="Resultados principales">

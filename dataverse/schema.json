@@ -1,0 +1,52 @@
+{
+  "environmentUrl": "https://db-px.crm2.dynamics.com/",
+  "auth": {
+    "tenantId": "e6805558-f5bb-444c-8af2-5f3a4d6dd3fc",
+    "clientId": "ffcf61c2-18a2-4be4-a753-c81934026e4d"
+  },
+  "solution": {
+    "displayName": "Matriz Comercial PX",
+    "uniqueName": "MatrizComercialPX",
+    "publisherPrefix": "px"
+  },
+  "tables": [
+    {
+      "displayName": "Matriz Comercial",
+      "schemaName": "px_MatrizComercial",
+      "primaryColumn": {
+        "displayName": "Consecutivo",
+        "schemaName": "px_Consecutivo",
+        "type": "text"
+      },
+      "columns": [
+        { "displayName": "Cliente", "schemaName": "px_Cliente", "type": "text" },
+        { "displayName": "Responsable", "schemaName": "px_Responsable", "type": "text" },
+        { "displayName": "Fecha Solicitud", "schemaName": "px_FechaSolicitud", "type": "date" },
+        {
+          "displayName": "Estado",
+          "schemaName": "px_Estado",
+          "type": "choice",
+          "options": ["Borrador", "En revision", "Aprobada", "Rechazada", "Ganada", "Perdida", "Cerrada"]
+        },
+        {
+          "displayName": "Fase",
+          "schemaName": "px_Fase",
+          "type": "choice",
+          "options": ["Evaluacion", "Cotizacion", "Negociacion", "Orden de compra", "Facturacion", "Entrega", "Cierre"]
+        },
+        { "displayName": "Hardware", "schemaName": "px_Hardware", "type": "currency" },
+        { "displayName": "Obsequios", "schemaName": "px_Obsequios", "type": "currency" },
+        { "displayName": "Margen Objetivo", "schemaName": "px_MargenObjetivo", "type": "decimal" },
+        { "displayName": "Fletes", "schemaName": "px_Fletes", "type": "currency" },
+        { "displayName": "Plazo Credito", "schemaName": "px_PlazoCredito", "type": "integer" },
+        { "displayName": "Total Costos Directos", "schemaName": "px_TotalCostosDirectos", "type": "currency" },
+        { "displayName": "Valor Venta", "schemaName": "px_ValorVenta", "type": "currency" },
+        { "displayName": "IVA Valor", "schemaName": "px_IvaValor", "type": "currency" },
+        { "displayName": "Valor Facturar", "schemaName": "px_ValorFacturar", "type": "currency" },
+        { "displayName": "Utilidad Bruta", "schemaName": "px_UtilidadBruta", "type": "currency" },
+        { "displayName": "Margen Sobre Costos", "schemaName": "px_MargenSobreCostos", "type": "decimal" },
+        { "displayName": "Margen Sobre Venta", "schemaName": "px_MargenSobreVenta", "type": "decimal" }
+      ]
+    }
+  ]
+}

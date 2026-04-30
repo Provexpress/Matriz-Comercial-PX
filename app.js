@@ -202,11 +202,86 @@ function exportTable() {
   URL.revokeObjectURL(url);
 }
 
+function renderMatrices(rows) {
+  const tbody = document.querySelector("#matricesList");
+  if (!tbody) return;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="7">No hay matrices creadas</td></tr>`;
+    return;
+  }
+
+  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#039;"
+  }[char]));
+
+  tbody.innerHTML = rows.map((row) => `
+    <tr>
+      <td>${escapeHtml(row.consecutivo)}</td>
+      <td>${escapeHtml(row.cliente)}</td>
+      <td>${escapeHtml(row.responsable)}</td>
+      <td>${escapeHtml(row.estado)}</td>
+      <td>${escapeHtml(row.fase)}</td>
+      <td>${currency.format(Number(row.valorVenta || 0))}</td>
+      <td>${currency.format(Number(row.utilidadBruta || 0))}</td>
+    </tr>
+  `).join("");
+}
+
+async function loadMatrices() {
+  const tbody = document.querySelector("#matricesList");
+  if (tbody) tbody.innerHTML = `<tr><td colspan="7">Cargando...</td></tr>`;
+
+  try {
+    const response = await fetch("/api/matrices");
+    if (!response.ok) throw new Error("No fue posible cargar matrices");
+    renderMatrices(await response.json());
+  } catch (error) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7">${error.message}</td></tr>`;
+  }
+}
+
+async function saveMatrix() {
+  const button = document.querySelector("#saveMatrixBtn");
+  const previousText = button.querySelector("span").textContent;
+  button.disabled = true;
+  button.querySelector("span").textContent = "Guardando...";
+
+  try {
+    const response = await fetch("/api/matrices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(state)
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || "No fue posible guardar la matriz");
+    }
+
+    const result = await response.json();
+    document.querySelector("#saveState").textContent = `Guardada ${result.consecutivo}`;
+    await loadMatrices();
+  } catch (error) {
+    document.querySelector("#saveState").textContent = error.message;
+  } finally {
+    button.disabled = false;
+    button.querySelector("span").textContent = previousText;
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   bindInputs();
   render();
   document.querySelector("#resetBtn").addEventListener("click", resetValues);
   document.querySelector("#printBtn").addEventListener("click", () => window.print());
   document.querySelector("#exportBtn").addEventListener("click", exportTable);
+  document.querySelector("#saveMatrixBtn").addEventListener("click", saveMatrix);
+  document.querySelector("#refreshMatricesBtn").addEventListener("click", loadMatrices);
+  loadMatrices();
   if (window.lucide) window.lucide.createIcons();
 });
