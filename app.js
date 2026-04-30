@@ -115,13 +115,13 @@ function getAuthRedirectUri() {
 }
 
 function initMsal() {
-  if (typeof msal === "undefined") {
+  if (!window.msal) {
     throw new Error("MSAL no esta disponible");
   }
 
   if (msalApp) return msalApp;
 
-  msalApp = new msal.PublicClientApplication({
+  msalApp = new window.msal.PublicClientApplication({
     auth: {
       clientId: dataverseConfig.clientId,
       authority: `https://login.microsoftonline.com/${dataverseConfig.tenantId}`,
@@ -134,7 +134,7 @@ function initMsal() {
 }
 
 function loadMsal() {
-  if (typeof msal !== "undefined") return Promise.resolve();
+  if (window.msal) return Promise.resolve();
 
   const sources = [
     "https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js",
@@ -150,7 +150,13 @@ function loadMsal() {
 
       const script = document.createElement("script");
       script.src = sources[index];
-      script.onload = () => resolve();
+      script.onload = () => {
+        if (window.msal) {
+          resolve();
+          return;
+        }
+        loadSource(index + 1);
+      };
       script.onerror = () => loadSource(index + 1);
       document.head.appendChild(script);
     };
