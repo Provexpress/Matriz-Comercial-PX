@@ -318,6 +318,20 @@ th:last-child {
   background: rgba(0, 112, 192, 0.1);
 }
 
+.field-note {
+  display: none;
+  margin-top: 6px;
+  color: var(--blue-dark);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.note-row:hover .field-note,
+.note-row:focus-within .field-note {
+  display: block;
+}
+
 .total-row td {
   font-size: 1.02rem;
   font-weight: 800;

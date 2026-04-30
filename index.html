@@ -14,7 +14,7 @@
         <div class="brand">
           <img src="assets/provex-logo.jpeg" alt="Provexpress" />
           <div>
-            <p class="eyebrow">COM-F-XXX</p>
+            <p class="eyebrow">Matriz</p>
             <h1>Evaluación de proyectos</h1>
           </div>
         </div>
@@ -82,14 +82,6 @@
               <input data-field="hardware" type="number" min="0" step="1000" />
             </label>
             <label>
-              <span>Servicios</span>
-              <input data-field="servicios" type="number" min="0" step="1000" />
-            </label>
-            <label>
-              <span>Licenciamientos</span>
-              <input data-field="licenciamientos" type="number" min="0" step="1000" />
-            </label>
-            <label>
               <span>Obsequios</span>
               <input data-field="obsequios" type="number" min="0" step="1000" />
             </label>
@@ -102,32 +94,12 @@
               <input data-field="margenObjetivo" type="number" min="0" max="95" step="0.01" />
             </label>
             <label>
-              <span>IVA aplicable</span>
-              <input data-field="iva" type="number" min="0" max="100" step="0.01" />
-            </label>
-            <label>
-              <span>Comisión comercial</span>
-              <input data-field="comision" type="number" min="0" max="100" step="0.01" />
-            </label>
-            <label>
-              <span>Impuestos estimados</span>
-              <input data-field="impuestos" type="number" min="0" max="100" step="0.01" />
-            </label>
-            <label>
               <span>Costo fletes</span>
               <input data-field="fletes" type="number" min="0" step="1000" />
             </label>
             <label>
-              <span>Imprevistos estimados</span>
-              <input data-field="imprevistos" type="number" min="0" max="100" step="0.0001" />
-            </label>
-            <label>
               <span>Plazo crédito cliente en días</span>
               <input data-field="plazoCredito" type="number" min="0" step="1" />
-            </label>
-            <label>
-              <span>Base financiación mensual</span>
-              <input data-field="baseFinanciacion" type="number" min="0" max="100" step="0.01" />
             </label>
           </div>
         </aside>
@@ -151,27 +123,49 @@
               </thead>
               <tbody>
                 <tr class="section-row"><th colspan="2">Costos Directos del Proyecto</th></tr>
-                <tr class="editable-row"><td>Productos físicos Hardware</td><td data-out="hardware"></td></tr>
-                <tr class="editable-row"><td>Servicios</td><td data-out="servicios"></td></tr>
-                <tr class="editable-row"><td>Licenciamientos</td><td data-out="licenciamientos"></td></tr>
+                <tr class="editable-row"><td>Hardware</td><td data-out="hardware"></td></tr>
                 <tr class="editable-row"><td>Obsequios</td><td data-out="obsequios"></td></tr>
                 <tr class="total-row"><td>Total Costos Directos del Proyecto</td><td data-out="totalCostosDirectos"></td></tr>
                 <tr class="editable-row"><td>% Margen Objetivo</td><td data-out="margenObjetivo"></td></tr>
-                <tr class="accent-row"><td>Utilidad esperada antes de gastos internos</td><td data-out="utilidadEsperada"></td></tr>
+                <tr class="accent-row"><td>Utilidad antes de gastos internos</td><td data-out="utilidadEsperada"></td></tr>
                 <tr class="total-row"><td>Valor de venta del Proyecto Antes de IVA</td><td data-out="valorVenta"></td></tr>
                 <tr><td>% IVA aplicable</td><td data-out="iva"></td></tr>
                 <tr><td>IVA</td><td data-out="ivaValor"></td></tr>
                 <tr class="total-row"><td>Valor a Facturar</td><td data-out="valorFacturar"></td></tr>
                 <tr class="section-row"><th colspan="2">Costos Internos</th></tr>
-                <tr><td>% Comisión de Ventas del comercial</td><td data-out="comision"></td></tr>
+                <tr class="note-row">
+                  <td>
+                    % Comisión de Ventas del comercial
+                    <small class="field-note">Porcentaje usado para estimar el costo comercial total sobre la utilidad esperada. Puede incluir comisión base, carga prestacional, seguridad social, parafiscales y una provisión interna asociada al pago comercial.</small>
+                  </td>
+                  <td data-out="comision"></td>
+                </tr>
                 <tr><td>Comisión estimada del Comercial incluida carga prestacional</td><td data-out="comisionValor"></td></tr>
-                <tr><td>% Impuestos estimados de evaluación</td><td data-out="impuestos"></td></tr>
+                <tr class="note-row">
+                  <td>
+                    % Impuestos estimados de evaluación
+                    <small class="field-note">Provisión comercial para cubrir impuestos/transacciones como retenciones, ICA, GMF/4x1000 u otros costos tributarios indirectos que afectan la rentabilidad del proyecto.</small>
+                  </td>
+                  <td data-out="impuestos"></td>
+                </tr>
                 <tr><td>Valor impuestos estimados sobre valor de venta</td><td data-out="impuestosValor"></td></tr>
                 <tr class="editable-row"><td>Costo fletes</td><td data-out="fletes"></td></tr>
-                <tr><td>% Imprevistos estimados</td><td data-out="imprevistos"></td></tr>
+                <tr class="note-row">
+                  <td>
+                    % Imprevistos estimados
+                    <small class="field-note">Porcentaje fijo usado como provisión mínima para cubrir variaciones menores o costos no previstos durante la ejecución del proyecto. Actualmente equivale al 0,02% del valor de venta antes de IVA.</small>
+                  </td>
+                  <td data-out="imprevistos"></td>
+                </tr>
                 <tr><td>Valor Imprevistos estimados</td><td data-out="imprevistosValor"></td></tr>
                 <tr class="editable-row"><td>Plazo de Crédito al cliente en días</td><td data-out="plazoCredito"></td></tr>
-                <tr><td>% Base de financiación mensual</td><td data-out="baseFinanciacion"></td></tr>
+                <tr class="note-row">
+                  <td>
+                    % Base de financiación mensual
+                    <small class="field-note">Porcentaje fijo usado para estimar el costo financiero mensual cuando el plazo de crédito al cliente supera 60 días. Se aplica proporcionalmente sobre los días adicionales del plazo.</small>
+                  </td>
+                  <td data-out="baseFinanciacion"></td>
+                </tr>
                 <tr><td>% de financiación ligado al plazo</td><td data-out="financiacionPorcentaje"></td></tr>
                 <tr><td>Costo de financiación para evaluación</td><td data-out="financiacionValor"></td></tr>
                 <tr class="total-row"><td>Total Costos internos del proyecto</td><td data-out="totalCostosInternos"></td></tr>

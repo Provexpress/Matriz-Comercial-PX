@@ -1,25 +1,21 @@
 const defaults = {
-  fechaSolicitud: new Date().toISOString().slice(0, 10),
+  fechaSolicitud: "",
   cliente: "",
   responsable: "",
-  hardware: 2000000,
-  servicios: 0,
-  licenciamientos: 0,
-  obsequios: 0,
-  margenObjetivo: 15,
+  hardware: "",
+  obsequios: "",
+  margenObjetivo: "",
   iva: 19,
   comision: 15,
   impuestos: 3.5,
-  fletes: 0,
+  fletes: "",
   imprevistos: 0.02,
-  plazoCredito: 90,
+  plazoCredito: "",
   baseFinanciacion: 1.1
 };
 
 const moneyFields = new Set([
   "hardware",
-  "servicios",
-  "licenciamientos",
   "obsequios",
   "totalCostosDirectos",
   "utilidadEsperada",
@@ -50,7 +46,7 @@ const ratioFields = new Set([
   "margenSobreVenta"
 ]);
 
-const storageKey = "matriz-comercial-px";
+const storageKey = "matriz-comercial-px-empty-inputs";
 const fields = {};
 
 const currency = new Intl.NumberFormat("es-CO", {
@@ -82,8 +78,6 @@ function asRate(value) {
 function calculate() {
   const totalCostosDirectos =
     Number(state.hardware) +
-    Number(state.servicios) +
-    Number(state.licenciamientos) +
     Number(state.obsequios);
   const margenObjetivo = asRate(state.margenObjetivo);
   const valorVenta = margenObjetivo >= 1 ? 0 : totalCostosDirectos / (1 - margenObjetivo);
@@ -159,7 +153,7 @@ function bindInputs() {
     fields[input.dataset.field] = input;
     input.value = state[input.dataset.field];
     input.addEventListener("input", () => {
-      state[input.dataset.field] = Number(input.value || 0);
+      state[input.dataset.field] = input.value === "" ? "" : Number(input.value);
       render();
       saveState();
     });
