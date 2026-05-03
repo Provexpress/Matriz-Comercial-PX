@@ -33,6 +33,14 @@ body.auth-ready .auth-gate {
   display: none;
 }
 
+.app-shell.app-locked {
+  display: none;
+}
+
+.auth-gate.auth-hidden {
+  display: none;
+}
+
 button,
 input,
 select {

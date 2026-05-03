@@ -180,6 +180,8 @@ function updateAuthStatus(text) {
 }
 
 function setAuthenticatedUi() {
+  document.querySelector("#appShell")?.classList.remove("app-locked");
+  document.querySelector("#authGate")?.classList.add("auth-hidden");
   document.body.classList.remove("auth-pending");
   document.body.classList.add("auth-ready");
   document.querySelector("#appShell")?.setAttribute("aria-hidden", "false");
