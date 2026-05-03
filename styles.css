@@ -25,6 +25,14 @@ body {
   font-family: Inter, "Segoe UI", Arial, sans-serif;
 }
 
+body.auth-pending .app-shell {
+  display: none;
+}
+
+body.auth-ready .auth-gate {
+  display: none;
+}
+
 button,
 input,
 select {
@@ -35,6 +43,48 @@ select {
   width: min(1500px, calc(100% - 32px));
   margin: 0 auto;
   padding: 24px 0 40px;
+}
+
+.auth-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-card {
+  width: min(440px, 100%);
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.auth-card img {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 16px;
+  object-fit: contain;
+}
+
+.auth-copy {
+  margin: 14px 0 20px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.auth-connect {
+  width: 100%;
+}
+
+.auth-status {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .topbar,

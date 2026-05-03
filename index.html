@@ -6,10 +6,24 @@
     <title>Matriz Comercial PX</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
-    <script src="app.js?v=20260502-autosync1" defer></script>
+    <script src="app.js?v=20260502-authgate1" defer></script>
   </head>
-  <body>
-    <main class="app-shell">
+  <body class="auth-pending">
+    <section class="auth-gate" id="authGate" aria-label="Inicio de sesion">
+      <div class="auth-card">
+        <img src="assets/provex-logo.jpeg" alt="Provexpress" />
+        <p class="eyebrow">Matriz Comercial PX</p>
+        <h1>Evaluacion de proyectos</h1>
+        <p class="auth-copy">Ingresa con tu cuenta corporativa para sincronizar matrices y registrar evaluaciones.</p>
+        <button class="primary-button auth-connect" type="button" id="authConnectBtn">
+          <i data-lucide="log-in"></i>
+          <span>Conectar con Microsoft</span>
+        </button>
+        <span class="auth-status" id="authStatus">Esperando conexion</span>
+      </div>
+    </section>
+
+    <main class="app-shell" id="appShell" aria-hidden="true">
       <header class="topbar">
         <div class="brand">
           <img src="assets/provex-logo.jpeg" alt="Provexpress" />

@@ -174,6 +174,17 @@ function updateConnectionLabel(text) {
   if (label) label.textContent = text;
 }
 
+function updateAuthStatus(text) {
+  const status = document.querySelector("#authStatus");
+  if (status) status.textContent = text;
+}
+
+function setAuthenticatedUi() {
+  document.body.classList.remove("auth-pending");
+  document.body.classList.add("auth-ready");
+  document.querySelector("#appShell")?.setAttribute("aria-hidden", "false");
+}
+
 async function getDataverseToken({ interactive = true } = {}) {
   await loadMsal();
   const app = initMsal();
@@ -198,10 +209,25 @@ async function getDataverseToken({ interactive = true } = {}) {
 }
 
 async function connectMicrosoft() {
+  const authButton = document.querySelector("#authConnectBtn");
+  if (authButton) authButton.disabled = true;
+  updateAuthStatus("Conectando con Microsoft...");
   updateConnectionLabel("Conectando...");
-  await getDataverseToken();
-  if (currentAccount) updateConnectionLabel(currentAccount.name || currentAccount.username || "Conectado");
-  await loadMatrices();
+  try {
+    await getDataverseToken();
+    if (currentAccount) {
+      const name = currentAccount.name || currentAccount.username || "Conectado";
+      updateConnectionLabel(name);
+      updateAuthStatus(`Conectado como ${name}`);
+    }
+    setAuthenticatedUi();
+    await loadMatrices();
+  } catch (error) {
+    updateAuthStatus(error.message);
+    updateConnectionLabel("Conectar");
+  } finally {
+    if (authButton) authButton.disabled = false;
+  }
 }
 
 async function dataverseRequest(method, relativeUrl, body, extraHeaders = {}, options = {}) {
@@ -460,13 +486,17 @@ async function syncOnStartup() {
 
     if (!currentAccount) {
       if (tbody) tbody.innerHTML = `<tr><td colspan="7">Conecta con Microsoft para sincronizar matrices</td></tr>`;
+      updateAuthStatus("Conecta con Microsoft para continuar");
       return;
     }
 
     updateConnectionLabel(currentAccount.name || currentAccount.username || "Conectado");
+    updateAuthStatus("Sincronizando matrices...");
+    setAuthenticatedUi();
     await loadMatrices({ interactive: false });
   } catch (error) {
     if (tbody) tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
+    updateAuthStatus(error.message);
   }
 }
 
@@ -582,6 +612,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#saveMatrixBtn").addEventListener("click", saveMatrix);
   document.querySelector("#refreshMatricesBtn").addEventListener("click", loadMatrices);
   document.querySelector("#loginBtn").addEventListener("click", connectMicrosoft);
+  document.querySelector("#authConnectBtn").addEventListener("click", connectMicrosoft);
   document.querySelector("#newMatrixBtn").addEventListener("click", startNewMatrix);
   document.querySelector("#matricesList").addEventListener("change", handlePhaseChange);
   document.querySelectorAll("[data-view-target]").forEach((button) => {
