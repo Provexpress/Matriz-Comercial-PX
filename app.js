@@ -169,13 +169,19 @@ function loadMsal() {
   });
 }
 
-async function getDataverseToken() {
+function updateConnectionLabel(text) {
+  const label = document.querySelector("#loginBtn span");
+  if (label) label.textContent = text;
+}
+
+async function getDataverseToken({ interactive = true } = {}) {
   await loadMsal();
   const app = initMsal();
   const scopes = [`${dataverseConfig.environmentUrl}/user_impersonation`];
   currentAccount = app.getAllAccounts()[0] || currentAccount;
 
   if (!currentAccount) {
+    if (!interactive) throw new Error("Conecta con Microsoft para sincronizar matrices");
     const login = await app.loginPopup({ scopes });
     currentAccount = login.account;
   }
@@ -184,6 +190,7 @@ async function getDataverseToken() {
     const result = await app.acquireTokenSilent({ scopes, account: currentAccount });
     return result.accessToken;
   } catch {
+    if (!interactive) throw new Error("La sesion necesita renovarse. Conecta de nuevo.");
     const result = await app.acquireTokenPopup({ scopes, account: currentAccount });
     currentAccount = result.account;
     return result.accessToken;
@@ -191,14 +198,14 @@ async function getDataverseToken() {
 }
 
 async function connectMicrosoft() {
+  updateConnectionLabel("Conectando...");
   await getDataverseToken();
-  const label = document.querySelector("#loginBtn span");
-  if (label && currentAccount) label.textContent = currentAccount.name || currentAccount.username || "Conectado";
+  if (currentAccount) updateConnectionLabel(currentAccount.name || currentAccount.username || "Conectado");
   await loadMatrices();
 }
 
-async function dataverseRequest(method, relativeUrl, body, extraHeaders = {}) {
-  const token = await getDataverseToken();
+async function dataverseRequest(method, relativeUrl, body, extraHeaders = {}, options = {}) {
+  const token = await getDataverseToken(options);
   const url = new URL(relativeUrl, `${dataverseConfig.environmentUrl}/api/data/v9.2/`);
   const response = await fetch(url, {
     method,
@@ -225,12 +232,15 @@ async function dataverseRequest(method, relativeUrl, body, extraHeaders = {}) {
   return data;
 }
 
-async function getMatrixEntitySetName() {
+async function getMatrixEntitySetName(options = {}) {
   if (matrixEntitySetName) return matrixEntitySetName;
 
   const data = await dataverseRequest(
     "GET",
-    `EntityDefinitions(LogicalName='${dataverseConfig.tableLogicalName}')?$select=EntitySetName`
+    `EntityDefinitions(LogicalName='${dataverseConfig.tableLogicalName}')?$select=EntitySetName`,
+    null,
+    {},
+    options
   );
   matrixEntitySetName = data.EntitySetName;
   return matrixEntitySetName;
@@ -419,12 +429,12 @@ function renderMatrices(rows) {
   `).join("");
 }
 
-async function loadMatrices() {
+async function loadMatrices(options = {}) {
   const tbody = document.querySelector("#matricesList");
   if (tbody) tbody.innerHTML = `<tr><td colspan="7">Cargando...</td></tr>`;
 
   try {
-    const entitySet = await getMatrixEntitySetName();
+    const entitySet = await getMatrixEntitySetName(options);
     const query = [
       "$select=px_matrizcomercialid,px_consecutivo,px_cliente,px_responsable,px_fechasolicitud,px_estado,px_fase,px_valorventa,px_valorfacturar,px_utilidadbruta",
       "$orderby=createdon desc",
@@ -432,8 +442,29 @@ async function loadMatrices() {
     ].join("&");
     const data = await dataverseRequest("GET", `${entitySet}?${query}`, null, {
       Prefer: 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'
-    });
+    }, options);
     renderMatrices(data.value.map(toMatrixRow));
+  } catch (error) {
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
+  }
+}
+
+async function syncOnStartup() {
+  const tbody = document.querySelector("#matricesList");
+  if (tbody) tbody.innerHTML = `<tr><td colspan="7">Sincronizando...</td></tr>`;
+
+  try {
+    await loadMsal();
+    const app = initMsal();
+    currentAccount = app.getAllAccounts()[0] || null;
+
+    if (!currentAccount) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7">Conecta con Microsoft para sincronizar matrices</td></tr>`;
+      return;
+    }
+
+    updateConnectionLabel(currentAccount.name || currentAccount.username || "Conectado");
+    await loadMatrices({ interactive: false });
   } catch (error) {
     if (tbody) tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
   }
@@ -557,5 +588,6 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("click", () => switchView(button.dataset.viewTarget));
   });
   switchView("recordsView");
+  syncOnStartup();
   if (window.lucide) window.lucide.createIcons();
 });
