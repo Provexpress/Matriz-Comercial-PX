@@ -453,17 +453,93 @@ function startNewMatrix() {
 }
 
 function exportTable() {
-  const projectRows = `
-    <tr><th>Consecutivo</th><td>${state.consecutivo || ""}</td></tr>
-    <tr><th>Fecha solicitud</th><td>${state.fechaSolicitud || ""}</td></tr>
-    <tr><th>Cliente</th><td>${state.cliente || ""}</td></tr>
-    <tr><th>Responsable</th><td>${state.responsable || ""}</td></tr>
-    <tr><th>Fase del producto</th><td>${faseLabels[state.fase] || ""}</td></tr>
-  `;
+  const result = calculate();
+  const currentPhaseIndex = Math.max(0, faseSteps.findIndex((step) => step.value === String(state.fase)));
+  const projectRows = [
+    ["Consecutivo", state.consecutivo || "Sin asignar"],
+    ["Fecha solicitud", state.fechaSolicitud || ""],
+    ["Cliente", state.cliente || ""],
+    ["Responsable", state.responsable || ""],
+    ["Fase del producto", faseLabels[state.fase] || ""]
+  ].map(([label, value]) => `
+    <tr>
+      <th>${escapeHtml(label)}</th>
+      <td>${escapeHtml(value)}</td>
+    </tr>
+  `).join("");
+
+  const kpiRows = [
+    ["Total costos directos", currency.format(result.totalCostosDirectos)],
+    ["Valor venta antes de IVA", currency.format(result.valorVenta)],
+    ["Valor a facturar", currency.format(result.valorFacturar)],
+    ["Utilidad bruta Provexpress", currency.format(result.utilidadBruta)]
+  ].map(([label, value]) => `
+    <td class="kpi">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </td>
+  `).join("");
+
+  const processRows = faseSteps.map((step, index) => `
+    <td class="${index <= currentPhaseIndex ? "phase active" : "phase"}">
+      <div class="phase-number">${index + 1}</div>
+      <div>${escapeHtml(step.label)}</div>
+    </td>
+  `).join("");
+
   const html = `
-    <html><head><meta charset="utf-8"></head><body>
-      <table>${projectRows}</table>
-      ${document.querySelector("#evaluationTable").outerHTML}
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Segoe UI, Arial, sans-serif; color: #172033; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #dfe5ef; padding: 9px 11px; vertical-align: middle; }
+        .header td { border: 0; padding: 0 0 16px; }
+        .brand { color: #7030a0; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+        .title { color: #172033; font-size: 24px; font-weight: 800; }
+        .section { background: #7030a0; color: #ffffff; font-size: 14px; font-weight: 800; text-align: center; }
+        .meta th { width: 220px; background: #edf3fa; text-align: left; }
+        .meta td { font-weight: 700; }
+        .kpi { width: 25%; background: #fbfcff; }
+        .kpi span { display: block; color: #6a7283; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        .kpi strong { display: block; margin-top: 6px; color: #172033; font-size: 16px; }
+        .phase { width: 33.33%; text-align: center; background: #f7f9fc; color: #6a7283; font-weight: 800; }
+        .phase.active { background: #f7f0fc; color: #172033; }
+        .phase-number { display: inline-block; width: 22px; height: 22px; line-height: 22px; margin-bottom: 5px; border-radius: 50%; background: #7030a0; color: #ffffff; }
+        .sheet thead th { background: #7030a0; color: #ffffff; text-align: center; }
+        .sheet .section-row th { background: #edf3fa; color: #172033; text-align: center; font-size: 14px; }
+        .sheet .total-row td { background: #fbfcff; font-weight: 800; }
+        .sheet .accent-row td { background: #7030a0; color: #ffffff; font-weight: 800; }
+        .sheet td:last-child, .sheet th:last-child { text-align: right; }
+        .spacer td { border: 0; height: 14px; padding: 0; }
+      </style>
+    </head>
+    <body>
+      <table class="header">
+        <tr>
+          <td>
+            <div class="brand">Provexpress - Matriz Comercial PX</div>
+            <div class="title">Evaluacion de proyectos</div>
+          </td>
+        </tr>
+      </table>
+      <table class="meta">
+        <tr><td class="section" colspan="2">Informacion del proyecto</td></tr>
+        ${projectRows}
+      </table>
+      <table><tr class="spacer"><td></td></tr></table>
+      <table>
+        <tr><td class="section" colspan="4">Resumen financiero</td></tr>
+        <tr>${kpiRows}</tr>
+      </table>
+      <table><tr class="spacer"><td></td></tr></table>
+      <table>
+        <tr><td class="section" colspan="3">Proceso del producto</td></tr>
+        <tr>${processRows}</tr>
+      </table>
+      <table><tr class="spacer"><td></td></tr></table>
+      ${document.querySelector("#evaluationTable").outerHTML.replace("<table", '<table class="sheet"')}
     </body></html>
   `;
   const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
