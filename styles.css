@@ -727,10 +727,11 @@ th:last-child {
 
   body {
     background: #fff;
+    zoom: 0.5;
   }
 
   .app-shell {
-    width: 100%;
+    width: 200%;
     padding: 0;
   }
 
