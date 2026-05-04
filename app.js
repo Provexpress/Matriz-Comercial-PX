@@ -601,34 +601,49 @@ async function exportPdf() {
       doc.text(value, x + 6, kpiY + 30, { maxWidth: kpiWidth - 12 });
     });
 
-    const processY = kpiY + 58;
+    const processY = kpiY + 50;
+    const processBoxY = processY - 13;
+    const processBoxHeight = 54;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
+    doc.setFontSize(7.6);
     doc.setTextColor(...purple);
-    doc.text("PROCESO DEL PRODUCTO", margin, processY - 12);
+    doc.text("PROCESO DEL PRODUCTO", margin + 8, processBoxY + 10);
 
     const currentPhaseIndex = Math.max(0, faseSteps.findIndex((step) => step.value === String(state.fase)));
-    const startX = margin + 35;
-    const endX = pageWidth - margin - 35;
+    const startX = margin + 70;
+    const endX = pageWidth - margin - 70;
     const stepGap = (endX - startX) / (faseSteps.length - 1);
-    doc.setDrawColor(16, 24, 40);
-    doc.setLineWidth(4);
-    doc.line(startX, processY + 16, endX, processY + 16);
+    const trackY = processY + 13;
+    const activeX = startX + currentPhaseIndex * stepGap;
+
+    doc.setDrawColor(...line);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(margin, processBoxY, pageWidth - margin * 2, processBoxHeight, 3, 3, "S");
+
+    doc.setDrawColor(...line);
+    doc.setLineWidth(1.2);
+    doc.line(startX, trackY, endX, trackY);
+    doc.setDrawColor(...purple);
+    doc.setLineWidth(2);
+    doc.line(startX, trackY, activeX, trackY);
+
     faseSteps.forEach((step, index) => {
       const x = startX + index * stepGap;
       const active = index <= currentPhaseIndex;
-      doc.setDrawColor(...(active ? purple : ink));
-      doc.setFillColor(255, 255, 255);
-      doc.circle(x, processY, 17, "FD");
+
+      doc.setDrawColor(...(active ? purple : line));
+      doc.setLineWidth(active ? 1.6 : 1.1);
+      doc.setFillColor(...(active ? purple : [255, 255, 255]));
+      doc.circle(x, trackY, 9.5, "FD");
+
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.setTextColor(...(active ? purple : muted));
-      doc.text(String(index + 1), x, processY + 4, { align: "center" });
-      doc.setFillColor(...(active ? purple : ink));
-      doc.circle(x, processY + 16, 8, "F");
-      doc.setTextColor(...ink);
-      doc.setFontSize(7);
-      doc.text(step.label.toUpperCase(), x, processY + 42, { align: "center", maxWidth: 120 });
+      doc.setFontSize(7.6);
+      doc.setTextColor(...(active ? [255, 255, 255] : muted));
+      doc.text(String(index + 1), x, trackY + 2.7, { align: "center" });
+
+      doc.setFontSize(6.7);
+      doc.setTextColor(...(index === currentPhaseIndex ? purple : ink));
+      doc.text(step.label.toUpperCase(), x, trackY + 25, { align: "center", maxWidth: 118 });
     });
 
     const tableRows = [
@@ -661,7 +676,7 @@ async function exportPdf() {
     ];
 
     doc.autoTable({
-      startY: processY + 56,
+      startY: processY + 47,
       margin: { left: margin, right: margin, bottom: 18 },
       tableWidth: pageWidth - margin * 2,
       theme: "grid",
