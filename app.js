@@ -86,9 +86,9 @@ const faseLabels = {
 };
 
 const faseSteps = [
-  { value: String(faseValues.solicitudCredito), label: "Solicitud de credito" },
-  { value: String(faseValues.oferta), label: "Oferta" },
-  { value: String(faseValues.cierre), label: "Cierre" }
+  { value: String(faseValues.solicitudCredito), label: "Solicitud de credito", icon: "clipboard-list" },
+  { value: String(faseValues.oferta), label: "Oferta", icon: "file-check-2" },
+  { value: String(faseValues.cierre), label: "Cierre", icon: "handshake" }
 ];
 
 const currency = new Intl.NumberFormat("es-CO", {
@@ -376,11 +376,15 @@ function renderPhaseProgress() {
     const status = index < activeIndex ? "done" : index === activeIndex ? "current" : "pending";
     return `
       <li class="phase-step ${status}">
+        <span class="phase-icon"><i data-lucide="${step.icon}"></i></span>
+        <span class="phase-line" aria-hidden="true"></span>
         <span class="phase-dot">${index + 1}</span>
         <span class="phase-label">${escapeHtml(step.label)}</span>
       </li>
     `;
   }).join("");
+
+  if (window.lucide) window.lucide.createIcons();
 }
 
 function updateSaveButtonMode() {

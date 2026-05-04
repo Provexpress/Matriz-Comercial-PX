@@ -264,7 +264,7 @@ button svg {
 
 .process-panel {
   display: none;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 20px;
   margin-top: 16px;
@@ -279,57 +279,100 @@ button svg {
 .phase-progress {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  width: min(720px, 100%);
+  gap: 0;
+  width: min(760px, 100%);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .phase-step {
+  --step-color: #a9b1c1;
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-rows: 58px 22px auto;
+  justify-items: center;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  gap: 6px;
+  position: relative;
+  min-height: 118px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 0;
   color: var(--muted);
-  background: #fff;
+  background: transparent;
   font-weight: 800;
+  text-align: center;
 }
 
 .phase-step.done,
 .phase-step.current {
+  --step-color: var(--purple);
   color: var(--ink);
-  border-color: rgba(112, 48, 160, 0.35);
-  background: #f7f0fc;
+  border-color: transparent;
+  background: transparent;
 }
 
 .phase-step.current {
-  box-shadow: 0 0 0 3px rgba(112, 48, 160, 0.12);
+  box-shadow: none;
+}
+
+.phase-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--step-color);
+  border-radius: 50%;
+  color: var(--step-color);
+  background: #fff;
+}
+
+.phase-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.phase-line {
+  position: absolute;
+  top: 68px;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  height: 8px;
+  background: #101828;
+}
+
+.phase-step:first-child .phase-line {
+  left: 50%;
+}
+
+.phase-step:last-child .phase-line {
+  right: 50%;
 }
 
 .phase-dot {
+  position: relative;
+  z-index: 1;
   display: inline-grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   color: #fff;
-  background: #a9b1c1;
-  font-size: 0.8rem;
+  background: var(--step-color);
+  font-size: 0.88rem;
+  line-height: 1;
 }
 
-.phase-step.done .phase-dot,
-.phase-step.current .phase-dot {
-  background: var(--purple);
+.phase-step.pending .phase-dot {
+  background: #101828;
 }
 
 .phase-label {
   min-width: 0;
-  font-size: 0.86rem;
+  color: var(--ink);
+  font-size: 0.78rem;
+  text-transform: uppercase;
 }
 
 label {
@@ -649,7 +692,12 @@ th:last-child {
   }
 
   .phase-progress {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+    min-width: 420px;
+  }
+
+  .process-panel {
+    overflow-x: auto;
   }
 
   .summary-grid {
