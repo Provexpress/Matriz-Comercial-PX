@@ -892,6 +892,7 @@ async function exportTable() {
   }
 
   function addLine(label, value, options = {}) {
+    const row = sheet.getRow(rowNumber);
     sheet.mergeCells(rowNumber, 2, rowNumber, 6);
     const labelCell = sheet.getCell(rowNumber, 1);
     const valueCell = sheet.getCell(rowNumber, 2);
@@ -906,6 +907,7 @@ async function exportTable() {
     }
     if (options.note) labelCell.note = options.note;
     styleRange(rowNumber, 1, 6, options.fill || colors.paper);
+    if (options.hidden) row.hidden = true;
     rowNumber += 1;
   }
 
@@ -916,29 +918,32 @@ async function exportTable() {
   addLine("% Margen Objetivo", asRate(state.margenObjetivo), { type: "percent" });
   addLine("Utilidad antes de gastos internos", result.utilidadEsperada, { type: "money", bold: true, fill: "F7F0FC" });
   addLine("Valor de venta del Proyecto Antes de IVA", result.valorVenta, { type: "money", bold: true, fill: colors.soft });
-  addLine("% IVA aplicable", asRate(state.iva), { type: "percent" });
+  addLine("% IVA aplicable", asRate(state.iva), { type: "percent", hidden: true });
   addLine("IVA", result.ivaValor, { type: "money" });
   addLine("Valor a Facturar", result.valorFacturar, { type: "money", bold: true, fill: colors.soft });
 
   addSection("Costos Internos");
   addLine("% Comision de Ventas del comercial", asRate(state.comision), {
     type: "percent",
+    hidden: true,
     note: "Porcentaje usado para estimar el costo comercial total sobre la utilidad esperada."
   });
   addLine("Comision estimada del Comercial incluida carga prestacional", result.comisionValor, { type: "money" });
   addLine("% Impuestos estimados de evaluacion", asRate(state.impuestos), {
     type: "percent",
+    hidden: true,
     note: "Provision comercial para cubrir impuestos/transacciones como retenciones, ICA, GMF/4x1000 u otros costos tributarios indirectos."
   });
   addLine("Valor impuestos estimados sobre valor de venta", result.impuestosValor, { type: "money" });
   addLine("Costo fletes", Number(state.fletes || 0), { type: "money" });
   addLine("% Imprevistos estimados", asRate(state.imprevistos), {
     type: "percent",
+    hidden: true,
     note: "Provision minima para cubrir variaciones menores o costos no previstos."
   });
   addLine("Valor Imprevistos estimados", result.imprevistosValor, { type: "money" });
   addLine("Plazo de Credito al cliente en dias", Number(state.plazoCredito || 0));
-  addLine("% Base de financiacion mensual", asRate(state.baseFinanciacion), { type: "percent" });
+  addLine("% Base de financiacion mensual", asRate(state.baseFinanciacion), { type: "percent", hidden: true });
   addLine("% de financiacion ligado al plazo", result.financiacionPorcentaje, { type: "percent" });
   addLine("Costo de financiacion para evaluacion", result.financiacionValor, { type: "money" });
   addLine("Total Costos internos del proyecto", result.totalCostosInternos, { type: "money", bold: true, fill: colors.soft });
