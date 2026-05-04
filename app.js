@@ -452,103 +452,257 @@ function startNewMatrix() {
   switchView("evaluationView");
 }
 
-function exportTable() {
+function loadExcelJs() {
+  if (window.ExcelJS) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
+    script.onload = () => window.ExcelJS ? resolve() : reject(new Error("No se pudo cargar ExcelJS"));
+    script.onerror = () => reject(new Error("No se pudo cargar ExcelJS"));
+    document.head.appendChild(script);
+  });
+}
+
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function safeFileName(value) {
+  return String(value || "provexpress")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\\/:*?"<>|%]+/g, "-")
+    .replace(/\s+/g, "-")
+    .toLowerCase();
+}
+
+async function exportTable() {
+  if (!window.ExcelJS) await loadExcelJs();
+
   const result = calculate();
   const currentPhaseIndex = Math.max(0, faseSteps.findIndex((step) => step.value === String(state.fase)));
-  const projectRows = [
+
+  const workbook = new window.ExcelJS.Workbook();
+  workbook.creator = "Provexpress";
+  workbook.created = new Date();
+  const sheet = workbook.addWorksheet("Evaluacion", {
+    views: [{ showGridLines: false }]
+  });
+
+  const colors = {
+    ink: "172033",
+    muted: "6A7283",
+    line: "DFE5EF",
+    purple: "7030A0",
+    blue: "0070C0",
+    paleBlue: "EDF3FA",
+    paper: "FFFFFF",
+    soft: "F7F9FC",
+    success: "16815A",
+    danger: "BD2F45"
+  };
+
+  sheet.columns = [
+    { width: 34 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 },
+    { width: 18 }
+  ];
+
+  const border = {
+    top: { style: "thin", color: { argb: colors.line } },
+    left: { style: "thin", color: { argb: colors.line } },
+    bottom: { style: "thin", color: { argb: colors.line } },
+    right: { style: "thin", color: { argb: colors.line } }
+  };
+  const moneyFormat = '"$"#,##0';
+  const percentFormat = "0.00%";
+
+  function mergeRow(rowNumber, from = 1, to = 6) {
+    sheet.mergeCells(rowNumber, from, rowNumber, to);
+    return sheet.getCell(rowNumber, from);
+  }
+
+  function sectionTitle(rowNumber, text) {
+    const cell = mergeRow(rowNumber);
+    cell.value = text;
+    cell.font = { bold: true, color: { argb: "FFFFFF" }, size: 12 };
+    cell.alignment = { horizontal: "center", vertical: "middle" };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.purple } };
+    cell.border = border;
+    sheet.getRow(rowNumber).height = 22;
+  }
+
+  function styleRange(rowNumber, from = 1, to = 6, fill = colors.paper) {
+    for (let col = from; col <= to; col += 1) {
+      const cell = sheet.getCell(rowNumber, col);
+      cell.border = border;
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fill } };
+      cell.alignment = { vertical: "middle", wrapText: true };
+    }
+  }
+
+  sheet.mergeCells("A1:F1");
+  sheet.getCell("A1").value = "PROVEXPRESS - MATRIZ COMERCIAL PX";
+  sheet.getCell("A1").font = { bold: true, color: { argb: colors.purple }, size: 11 };
+  sheet.getCell("A1").alignment = { horizontal: "center" };
+
+  sheet.mergeCells("A2:F2");
+  sheet.getCell("A2").value = "Evaluacion de proyectos";
+  sheet.getCell("A2").font = { bold: true, color: { argb: colors.ink }, size: 22 };
+  sheet.getCell("A2").alignment = { horizontal: "center" };
+  sheet.getRow(2).height = 30;
+
+  sectionTitle(4, "Informacion del proyecto");
+  [
     ["Consecutivo", state.consecutivo || "Sin asignar"],
     ["Fecha solicitud", state.fechaSolicitud || ""],
     ["Cliente", state.cliente || ""],
     ["Responsable", state.responsable || ""],
     ["Fase del producto", faseLabels[state.fase] || ""]
-  ].map(([label, value]) => `
-    <tr>
-      <th>${escapeHtml(label)}</th>
-      <td>${escapeHtml(value)}</td>
-    </tr>
-  `).join("");
+  ].forEach(([label, value], index) => {
+    const row = 5 + index;
+    sheet.mergeCells(row, 2, row, 6);
+    sheet.getCell(row, 1).value = label;
+    sheet.getCell(row, 2).value = value;
+    sheet.getCell(row, 1).font = { bold: true, color: { argb: colors.ink } };
+    sheet.getCell(row, 2).font = { bold: true, color: { argb: colors.ink } };
+    styleRange(row, 1, 6, index % 2 ? colors.paper : colors.soft);
+  });
 
-  const kpiRows = [
-    ["Total costos directos", currency.format(result.totalCostosDirectos)],
-    ["Valor venta antes de IVA", currency.format(result.valorVenta)],
-    ["Valor a facturar", currency.format(result.valorFacturar)],
-    ["Utilidad bruta Provexpress", currency.format(result.utilidadBruta)]
-  ].map(([label, value]) => `
-    <td class="kpi">
-      <span>${escapeHtml(label)}</span>
-      <strong>${escapeHtml(value)}</strong>
-    </td>
-  `).join("");
+  sectionTitle(11, "Resumen financiero");
+  const kpis = [
+    ["Total costos directos", result.totalCostosDirectos],
+    ["Valor venta antes de IVA", result.valorVenta],
+    ["Valor a facturar", result.valorFacturar],
+    ["Utilidad bruta", result.utilidadBruta]
+  ];
+  kpis.forEach(([label, value], index) => {
+    const startCol = index === 0 ? 1 : index + 2;
+    const cell = sheet.getCell(12, startCol);
+    cell.value = label;
+    cell.font = { bold: true, color: { argb: colors.muted }, size: 9 };
+    const valueCell = sheet.getCell(13, startCol);
+    valueCell.value = Number(value || 0);
+    valueCell.numFmt = moneyFormat;
+    valueCell.font = { bold: true, color: { argb: value < 0 ? colors.danger : colors.ink }, size: 13 };
+    styleRange(12, startCol, startCol, colors.soft);
+    styleRange(13, startCol, startCol, colors.soft);
+  });
 
-  const processRows = faseSteps.map((step, index) => `
-    <td class="${index <= currentPhaseIndex ? "phase active" : "phase"}">
-      <div class="phase-number">${index + 1}</div>
-      <div>${escapeHtml(step.label)}</div>
-    </td>
-  `).join("");
+  sectionTitle(15, "Proceso del producto");
+  faseSteps.forEach((step, index) => {
+    const startCol = index * 2 + 1;
+    sheet.mergeCells(16, startCol, 16, startCol + 1);
+    sheet.mergeCells(17, startCol, 17, startCol + 1);
+    const isActive = index <= currentPhaseIndex;
+    const numberCell = sheet.getCell(16, startCol);
+    numberCell.value = index + 1;
+    numberCell.font = { bold: true, color: { argb: "FFFFFF" }, size: 12 };
+    numberCell.alignment = { horizontal: "center", vertical: "middle" };
+    numberCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: isActive ? colors.purple : colors.ink } };
+    numberCell.border = border;
+    const labelCell = sheet.getCell(17, startCol);
+    labelCell.value = step.label;
+    labelCell.font = { bold: true, color: { argb: colors.ink }, size: 10 };
+    labelCell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: isActive ? "F7F0FC" : colors.soft } };
+    labelCell.border = border;
+  });
 
-  const html = `
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        body { font-family: Segoe UI, Arial, sans-serif; color: #172033; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #dfe5ef; padding: 9px 11px; vertical-align: middle; }
-        .header td { border: 0; padding: 0 0 16px; }
-        .brand { color: #7030a0; font-size: 12px; font-weight: 800; text-transform: uppercase; }
-        .title { color: #172033; font-size: 24px; font-weight: 800; }
-        .section { background: #7030a0; color: #ffffff; font-size: 14px; font-weight: 800; text-align: center; }
-        .meta th { width: 220px; background: #edf3fa; text-align: left; }
-        .meta td { font-weight: 700; }
-        .kpi { width: 25%; background: #fbfcff; }
-        .kpi span { display: block; color: #6a7283; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-        .kpi strong { display: block; margin-top: 6px; color: #172033; font-size: 16px; }
-        .phase { width: 33.33%; text-align: center; background: #f7f9fc; color: #6a7283; font-weight: 800; }
-        .phase.active { background: #f7f0fc; color: #172033; }
-        .phase-number { display: inline-block; width: 22px; height: 22px; line-height: 22px; margin-bottom: 5px; border-radius: 50%; background: #7030a0; color: #ffffff; }
-        .sheet thead th { background: #7030a0; color: #ffffff; text-align: center; }
-        .sheet .section-row th { background: #edf3fa; color: #172033; text-align: center; font-size: 14px; }
-        .sheet .total-row td { background: #fbfcff; font-weight: 800; }
-        .sheet .accent-row td { background: #7030a0; color: #ffffff; font-weight: 800; }
-        .sheet td:last-child, .sheet th:last-child { text-align: right; }
-        .spacer td { border: 0; height: 14px; padding: 0; }
-      </style>
-    </head>
-    <body>
-      <table class="header">
-        <tr>
-          <td>
-            <div class="brand">Provexpress - Matriz Comercial PX</div>
-            <div class="title">Evaluacion de proyectos</div>
-          </td>
-        </tr>
-      </table>
-      <table class="meta">
-        <tr><td class="section" colspan="2">Informacion del proyecto</td></tr>
-        ${projectRows}
-      </table>
-      <table><tr class="spacer"><td></td></tr></table>
-      <table>
-        <tr><td class="section" colspan="4">Resumen financiero</td></tr>
-        <tr>${kpiRows}</tr>
-      </table>
-      <table><tr class="spacer"><td></td></tr></table>
-      <table>
-        <tr><td class="section" colspan="3">Proceso del producto</td></tr>
-        <tr>${processRows}</tr>
-      </table>
-      <table><tr class="spacer"><td></td></tr></table>
-      ${document.querySelector("#evaluationTable").outerHTML.replace("<table", '<table class="sheet"')}
-    </body></html>
-  `;
-  const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `evaluacion-proyecto-${state.consecutivo || state.cliente || "provexpress"}.xls`;
-  link.click();
-  URL.revokeObjectURL(url);
+  sectionTitle(19, "Formato de evaluacion");
+  sheet.getRow(20).values = ["Concepto", "Valor", "", "", "", ""];
+  sheet.mergeCells("B20:F20");
+  styleRange(20, 1, 6, colors.purple);
+  sheet.getCell("A20").font = { bold: true, color: { argb: "FFFFFF" } };
+  sheet.getCell("B20").font = { bold: true, color: { argb: "FFFFFF" } };
+  sheet.getCell("A20").alignment = { horizontal: "center" };
+  sheet.getCell("B20").alignment = { horizontal: "center" };
+
+  let rowNumber = 21;
+  function addSection(text) {
+    sheet.mergeCells(rowNumber, 1, rowNumber, 6);
+    sheet.getCell(rowNumber, 1).value = text;
+    sheet.getCell(rowNumber, 1).font = { bold: true, color: { argb: colors.ink } };
+    sheet.getCell(rowNumber, 1).alignment = { horizontal: "center" };
+    styleRange(rowNumber, 1, 6, colors.paleBlue);
+    rowNumber += 1;
+  }
+
+  function addLine(label, value, options = {}) {
+    sheet.mergeCells(rowNumber, 2, rowNumber, 6);
+    const labelCell = sheet.getCell(rowNumber, 1);
+    const valueCell = sheet.getCell(rowNumber, 2);
+    labelCell.value = label;
+    valueCell.value = value;
+    valueCell.alignment = { horizontal: "right", vertical: "middle" };
+    if (options.type === "money") valueCell.numFmt = moneyFormat;
+    if (options.type === "percent") valueCell.numFmt = percentFormat;
+    if (options.bold) {
+      labelCell.font = { bold: true };
+      valueCell.font = { bold: true };
+    }
+    if (options.note) labelCell.note = options.note;
+    styleRange(rowNumber, 1, 6, options.fill || colors.paper);
+    rowNumber += 1;
+  }
+
+  addSection("Costos Directos del Proyecto");
+  addLine("Hardware", Number(state.hardware || 0), { type: "money" });
+  addLine("Obsequios", Number(state.obsequios || 0), { type: "money" });
+  addLine("Total Costos Directos del Proyecto", result.totalCostosDirectos, { type: "money", bold: true, fill: colors.soft });
+  addLine("% Margen Objetivo", asRate(state.margenObjetivo), { type: "percent" });
+  addLine("Utilidad antes de gastos internos", result.utilidadEsperada, { type: "money", bold: true, fill: "F7F0FC" });
+  addLine("Valor de venta del Proyecto Antes de IVA", result.valorVenta, { type: "money", bold: true, fill: colors.soft });
+  addLine("% IVA aplicable", asRate(state.iva), { type: "percent" });
+  addLine("IVA", result.ivaValor, { type: "money" });
+  addLine("Valor a Facturar", result.valorFacturar, { type: "money", bold: true, fill: colors.soft });
+
+  addSection("Costos Internos");
+  addLine("% Comision de Ventas del comercial", asRate(state.comision), {
+    type: "percent",
+    note: "Porcentaje usado para estimar el costo comercial total sobre la utilidad esperada."
+  });
+  addLine("Comision estimada del Comercial incluida carga prestacional", result.comisionValor, { type: "money" });
+  addLine("% Impuestos estimados de evaluacion", asRate(state.impuestos), {
+    type: "percent",
+    note: "Provision comercial para cubrir impuestos/transacciones como retenciones, ICA, GMF/4x1000 u otros costos tributarios indirectos."
+  });
+  addLine("Valor impuestos estimados sobre valor de venta", result.impuestosValor, { type: "money" });
+  addLine("Costo fletes", Number(state.fletes || 0), { type: "money" });
+  addLine("% Imprevistos estimados", asRate(state.imprevistos), {
+    type: "percent",
+    note: "Provision minima para cubrir variaciones menores o costos no previstos."
+  });
+  addLine("Valor Imprevistos estimados", result.imprevistosValor, { type: "money" });
+  addLine("Plazo de Credito al cliente en dias", Number(state.plazoCredito || 0));
+  addLine("% Base de financiacion mensual", asRate(state.baseFinanciacion), { type: "percent" });
+  addLine("% de financiacion ligado al plazo", result.financiacionPorcentaje, { type: "percent" });
+  addLine("Costo de financiacion para evaluacion", result.financiacionValor, { type: "money" });
+  addLine("Total Costos internos del proyecto", result.totalCostosInternos, { type: "money", bold: true, fill: colors.soft });
+  addLine("Utilidad Bruta Provexpress", result.utilidadBruta, { type: "money", bold: true, fill: "F7F0FC" });
+  addLine("% Margen Bruto Provexpress sobre costos", result.margenSobreCostos, { type: "percent" });
+  addLine("% Margen Bruto Provexpress sobre Valor de Venta", result.margenSobreVenta, { type: "percent", bold: true, fill: "F7F0FC" });
+
+  sheet.eachRow((row) => {
+    row.eachCell((cell) => {
+      cell.border = cell.border || border;
+      cell.alignment = { vertical: "middle", wrapText: true, ...cell.alignment };
+    });
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  downloadBlob(
+    new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+    `evaluacion-proyecto-${safeFileName(state.consecutivo || state.cliente || "provexpress")}.xlsx`
+  );
 }
 
 function renderMatrices(rows) {
