@@ -722,7 +722,7 @@ th:last-child {
 @media print {
   @page {
     size: letter;
-    margin: 0.45in;
+    margin: 0.25in;
   }
 
   body {
@@ -753,19 +753,19 @@ th:last-child {
 
   .topbar {
     min-height: auto;
-    padding: 0 0 12px;
+    padding: 0 0 6px;
     border: 0;
     border-bottom: 2px solid var(--purple);
     border-radius: 0;
   }
 
   .brand img {
-    width: 58px;
-    height: 58px;
+    width: 44px;
+    height: 44px;
   }
 
   h1 {
-    font-size: 22pt;
+    font-size: 18pt;
   }
 
   .eyebrow {
@@ -783,9 +783,9 @@ th:last-child {
 
   .project-strip {
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-top: 12px;
-    padding: 10px;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 7px;
     border-radius: 0;
   }
 
@@ -795,24 +795,24 @@ th:last-child {
 
   input,
   select {
-    min-height: 28px;
+    min-height: 22px;
     border: 0;
     padding: 0;
-    font-size: 9pt;
+    font-size: 8pt;
     font-weight: 700;
     appearance: none;
   }
 
   .process-panel {
     display: block;
-    margin-top: 10px;
-    padding: 10px;
+    margin-top: 7px;
+    padding: 7px;
     border-radius: 0;
     page-break-inside: avoid;
   }
 
   .process-panel > div {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .phase-progress {
@@ -821,62 +821,63 @@ th:last-child {
   }
 
   .phase-step {
-    min-height: 92px;
-    grid-template-rows: 42px 18px auto;
+    min-height: 66px;
+    grid-template-rows: 28px 14px auto;
+    gap: 2px;
   }
 
   .phase-icon {
-    width: 42px;
-    height: 42px;
+    width: 28px;
+    height: 28px;
     border-width: 2px;
   }
 
   .phase-icon svg {
-    width: 22px;
-    height: 22px;
+    width: 15px;
+    height: 15px;
   }
 
   .phase-line {
-    top: 50px;
-    height: 6px;
+    top: 34px;
+    height: 4px;
   }
 
   .phase-dot {
-    width: 22px;
-    height: 22px;
-    font-size: 8pt;
+    width: 16px;
+    height: 16px;
+    font-size: 6.5pt;
   }
 
   .phase-label {
-    font-size: 7.5pt;
+    font-size: 6.5pt;
   }
 
   .summary-grid {
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-top: 10px;
+    gap: 6px;
+    margin-top: 7px;
     page-break-inside: avoid;
   }
 
   .metric {
-    min-height: 68px;
-    padding: 10px;
+    min-height: 48px;
+    padding: 7px;
     border-radius: 0;
   }
 
   .metric span {
-    min-height: 22px;
-    font-size: 7.5pt;
+    min-height: 15px;
+    font-size: 6.5pt;
   }
 
   .metric strong {
-    margin-top: 6px;
-    font-size: 13pt;
+    margin-top: 3px;
+    font-size: 10pt;
   }
 
   .workbench {
     display: block;
-    margin-top: 10px;
+    margin-top: 7px;
   }
 
   .sheet-panel {
@@ -885,7 +886,7 @@ th:last-child {
   }
 
   .sheet-toolbar {
-    padding: 10px;
+    padding: 6px;
   }
 
   #saveState {
@@ -897,12 +898,13 @@ th:last-child {
   }
 
   table {
-    font-size: 8.5pt;
+    font-size: 7pt;
   }
 
   th,
   td {
-    padding: 6px 8px;
+    padding: 3px 5px;
+    line-height: 1.12;
   }
 
   thead th {
@@ -922,13 +924,19 @@ th:last-child {
   }
 
   .field-note {
-    display: block;
-    font-size: 7pt;
-    color: #394154;
+    display: none !important;
   }
 
   td:last-child,
   th:last-child {
-    width: 180px;
+    width: 145px;
+  }
+
+  .section-row th {
+    font-size: 8pt;
+  }
+
+  .accent-row.final td {
+    font-size: 8pt;
   }
 }
