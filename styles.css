@@ -720,6 +720,11 @@ th:last-child {
 }
 
 @media print {
+  @page {
+    size: letter;
+    margin: 0.45in;
+  }
+
   body {
     background: #fff;
   }
@@ -730,7 +735,10 @@ th:last-child {
   }
 
   .actions,
-  .control-panel {
+  .control-panel,
+  .view-tabs,
+  .records-panel,
+  .auth-gate {
     display: none;
   }
 
@@ -740,9 +748,187 @@ th:last-child {
   .metric,
   .sheet-panel {
     box-shadow: none;
+    border-color: #cfd7e6;
+  }
+
+  .topbar {
+    min-height: auto;
+    padding: 0 0 12px;
+    border: 0;
+    border-bottom: 2px solid var(--purple);
+    border-radius: 0;
+  }
+
+  .brand img {
+    width: 58px;
+    height: 58px;
+  }
+
+  h1 {
+    font-size: 22pt;
+  }
+
+  .eyebrow {
+    font-size: 8pt;
+  }
+
+  .app-view,
+  .app-view.active {
+    display: block;
+  }
+
+  #recordsView {
+    display: none;
+  }
+
+  .project-strip {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 0;
+  }
+
+  label span {
+    font-size: 7.5pt;
+  }
+
+  input,
+  select {
+    min-height: 28px;
+    border: 0;
+    padding: 0;
+    font-size: 9pt;
+    font-weight: 700;
+    appearance: none;
+  }
+
+  .process-panel {
+    display: block;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 0;
+    page-break-inside: avoid;
+  }
+
+  .process-panel > div {
+    margin-bottom: 8px;
+  }
+
+  .phase-progress {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .phase-step {
+    min-height: 92px;
+    grid-template-rows: 42px 18px auto;
+  }
+
+  .phase-icon {
+    width: 42px;
+    height: 42px;
+    border-width: 2px;
+  }
+
+  .phase-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .phase-line {
+    top: 50px;
+    height: 6px;
+  }
+
+  .phase-dot {
+    width: 22px;
+    height: 22px;
+    font-size: 8pt;
+  }
+
+  .phase-label {
+    font-size: 7.5pt;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    page-break-inside: avoid;
+  }
+
+  .metric {
+    min-height: 68px;
+    padding: 10px;
+    border-radius: 0;
+  }
+
+  .metric span {
+    min-height: 22px;
+    font-size: 7.5pt;
+  }
+
+  .metric strong {
+    margin-top: 6px;
+    font-size: 13pt;
   }
 
   .workbench {
     display: block;
+    margin-top: 10px;
+  }
+
+  .sheet-panel {
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .sheet-toolbar {
+    padding: 10px;
+  }
+
+  #saveState {
+    display: none;
+  }
+
+  .sheet-wrap {
+    overflow: visible;
+  }
+
+  table {
+    font-size: 8.5pt;
+  }
+
+  th,
+  td {
+    padding: 6px 8px;
+  }
+
+  thead th {
+    position: static;
+    background: var(--purple) !important;
+    color: #fff !important;
+  }
+
+  .section-row th,
+  .total-row td {
+    background: #edf3fa !important;
+  }
+
+  .accent-row td {
+    background: var(--purple) !important;
+    color: #fff !important;
+  }
+
+  .field-note {
+    display: block;
+    font-size: 7pt;
+    color: #394154;
+  }
+
+  td:last-child,
+  th:last-child {
+    width: 180px;
   }
 }
