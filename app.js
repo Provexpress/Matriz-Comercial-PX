@@ -755,6 +755,7 @@ async function exportTable() {
     line: "DFE5EF",
     purple: "7030A0",
     blue: "0070C0",
+    palePurple: "F2E7FA",
     paleBlue: "EDF3FA",
     paper: "FFFFFF",
     soft: "F7F9FC",
@@ -777,6 +778,12 @@ async function exportTable() {
     bottom: { style: "thin", color: { argb: colors.line } },
     right: { style: "thin", color: { argb: colors.line } }
   };
+  const titleBorder = {
+    top: { style: "thin", color: { argb: colors.purple } },
+    left: { style: "thin", color: { argb: colors.purple } },
+    bottom: { style: "medium", color: { argb: colors.purple } },
+    right: { style: "thin", color: { argb: colors.purple } }
+  };
   const moneyFormat = '"$"#,##0';
   const percentFormat = "0.00%";
 
@@ -787,12 +794,12 @@ async function exportTable() {
 
   function sectionTitle(rowNumber, text) {
     const cell = mergeRow(rowNumber);
-    cell.value = text;
-    cell.font = { bold: true, color: { argb: "FFFFFF" }, size: 12 };
+    cell.value = text.toUpperCase();
+    cell.font = { bold: true, color: { argb: "FFFFFF" }, size: 13 };
     cell.alignment = { horizontal: "center", vertical: "middle" };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.purple } };
-    cell.border = border;
-    sheet.getRow(rowNumber).height = 22;
+    cell.border = titleBorder;
+    sheet.getRow(rowNumber).height = 24;
   }
 
   function styleRange(rowNumber, from = 1, to = 6, fill = colors.paper) {
@@ -806,14 +813,18 @@ async function exportTable() {
 
   sheet.mergeCells("A1:F1");
   sheet.getCell("A1").value = "PROVEXPRESS - MATRIZ COMERCIAL PX";
-  sheet.getCell("A1").font = { bold: true, color: { argb: colors.purple }, size: 11 };
+  sheet.getCell("A1").font = { bold: true, color: { argb: colors.purple }, size: 12 };
   sheet.getCell("A1").alignment = { horizontal: "center" };
+  sheet.getCell("A1").fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.palePurple } };
+  sheet.getCell("A1").border = titleBorder;
+  sheet.getRow(1).height = 20;
 
   sheet.mergeCells("A2:F2");
   sheet.getCell("A2").value = "Evaluacion de proyectos";
-  sheet.getCell("A2").font = { bold: true, color: { argb: colors.ink }, size: 22 };
+  sheet.getCell("A2").font = { bold: true, color: { argb: colors.ink }, size: 24 };
   sheet.getCell("A2").alignment = { horizontal: "center" };
-  sheet.getRow(2).height = 30;
+  sheet.getCell("A2").border = titleBorder;
+  sheet.getRow(2).height = 34;
 
   sectionTitle(4, "Informacion del proyecto");
   [
@@ -827,7 +838,7 @@ async function exportTable() {
     sheet.mergeCells(row, 2, row, 6);
     sheet.getCell(row, 1).value = label;
     sheet.getCell(row, 2).value = value;
-    sheet.getCell(row, 1).font = { bold: true, color: { argb: colors.ink } };
+    sheet.getCell(row, 1).font = { bold: true, color: { argb: colors.purple }, size: 10 };
     sheet.getCell(row, 2).font = { bold: true, color: { argb: colors.ink } };
     styleRange(row, 1, 6, index % 2 ? colors.paper : colors.soft);
   });
@@ -843,7 +854,7 @@ async function exportTable() {
     const startCol = index === 0 ? 1 : index + 2;
     const cell = sheet.getCell(12, startCol);
     cell.value = label;
-    cell.font = { bold: true, color: { argb: colors.muted }, size: 9 };
+    cell.font = { bold: true, color: { argb: colors.purple }, size: 9.5 };
     const valueCell = sheet.getCell(13, startCol);
     valueCell.value = Number(value || 0);
     valueCell.numFmt = moneyFormat;
@@ -866,7 +877,7 @@ async function exportTable() {
     numberCell.border = border;
     const labelCell = sheet.getCell(17, startCol);
     labelCell.value = step.label;
-    labelCell.font = { bold: true, color: { argb: colors.ink }, size: 10 };
+    labelCell.font = { bold: true, color: { argb: isActive ? colors.purple : colors.ink }, size: 10.5 };
     labelCell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
     labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: isActive ? "F7F0FC" : colors.soft } };
     labelCell.border = border;
@@ -876,18 +887,20 @@ async function exportTable() {
   sheet.getRow(20).values = ["Concepto", "Valor", "", "", "", ""];
   sheet.mergeCells("B20:F20");
   styleRange(20, 1, 6, colors.purple);
-  sheet.getCell("A20").font = { bold: true, color: { argb: "FFFFFF" } };
-  sheet.getCell("B20").font = { bold: true, color: { argb: "FFFFFF" } };
+  sheet.getCell("A20").font = { bold: true, color: { argb: "FFFFFF" }, size: 12 };
+  sheet.getCell("B20").font = { bold: true, color: { argb: "FFFFFF" }, size: 12 };
   sheet.getCell("A20").alignment = { horizontal: "center" };
   sheet.getCell("B20").alignment = { horizontal: "center" };
+  sheet.getRow(20).height = 24;
 
   let rowNumber = 21;
   function addSection(text) {
     sheet.mergeCells(rowNumber, 1, rowNumber, 6);
     sheet.getCell(rowNumber, 1).value = text;
-    sheet.getCell(rowNumber, 1).font = { bold: true, color: { argb: colors.ink } };
+    sheet.getCell(rowNumber, 1).font = { bold: true, color: { argb: colors.purple }, size: 11 };
     sheet.getCell(rowNumber, 1).alignment = { horizontal: "center" };
     styleRange(rowNumber, 1, 6, colors.paleBlue);
+    sheet.getRow(rowNumber).height = 21;
     rowNumber += 1;
   }
 
