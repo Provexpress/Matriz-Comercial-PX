@@ -965,7 +965,7 @@ function renderMatrices(rows) {
   if (!tbody) return;
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="8">No hay matrices creadas</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7">No hay matrices creadas</td></tr>`;
     return;
   }
 
@@ -974,7 +974,6 @@ function renderMatrices(rows) {
       <td>${escapeHtml(row.consecutivo)}</td>
       <td>${escapeHtml(row.cliente)}</td>
       <td>${escapeHtml(row.responsable)}</td>
-      <td>${escapeHtml(row.estado)}</td>
       <td>
         <select class="phase-select" data-phase-select data-previous-value="${Number(row.faseValue)}" aria-label="Fase del producto">
           ${Object.entries(faseLabels).map(([value, label]) => `
@@ -1018,7 +1017,7 @@ async function loadMatrices(options = {}) {
 
 async function syncOnStartup() {
   const tbody = document.querySelector("#matricesList");
-  if (tbody) tbody.innerHTML = `<tr><td colspan="8">Sincronizando...</td></tr>`;
+  if (tbody) tbody.innerHTML = `<tr><td colspan="7">Sincronizando...</td></tr>`;
 
   try {
     await loadMsal();
@@ -1026,7 +1025,7 @@ async function syncOnStartup() {
     currentAccount = app.getAllAccounts()[0] || null;
 
     if (!currentAccount) {
-      if (tbody) tbody.innerHTML = `<tr><td colspan="8">Conecta con Microsoft para sincronizar matrices</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7">Conecta con Microsoft para sincronizar matrices</td></tr>`;
       updateAuthStatus("Conecta con Microsoft para continuar");
       return;
     }
