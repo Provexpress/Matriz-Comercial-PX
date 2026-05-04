@@ -481,6 +481,246 @@ function safeFileName(value) {
     .toLowerCase();
 }
 
+function loadExternalScript(src, globalCheck) {
+  if (globalCheck()) return Promise.resolve();
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = src;
+    script.onload = () => globalCheck() ? resolve() : reject(new Error(`No se pudo cargar ${src}`));
+    script.onerror = () => reject(new Error(`No se pudo cargar ${src}`));
+    document.head.appendChild(script);
+  });
+}
+
+async function loadPdfLibs() {
+  await loadExternalScript(
+    "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js",
+    () => Boolean(window.jspdf?.jsPDF)
+  );
+  await loadExternalScript(
+    "https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js",
+    () => Boolean(window.jspdf?.jsPDF?.API?.autoTable)
+  );
+}
+
+function pdfMoney(value) {
+  return currency.format(Number(value || 0));
+}
+
+function pdfPercent(value) {
+  return percent.format(Number(value || 0));
+}
+
+async function exportPdf() {
+  const button = document.querySelector("#printBtn");
+  const label = button?.querySelector("span");
+  const previousText = label?.textContent || "PDF";
+  if (button) button.disabled = true;
+  if (label) label.textContent = "Generando...";
+
+  try {
+    await loadPdfLibs();
+    const result = calculate();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "letter" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 28;
+    const purple = [112, 48, 160];
+    const ink = [23, 32, 51];
+    const muted = [106, 114, 131];
+    const line = [223, 229, 239];
+    const soft = [247, 249, 252];
+    const paleBlue = [237, 243, 250];
+
+    doc.setProperties({
+      title: `Evaluacion ${state.consecutivo || state.cliente || "Provexpress"}`,
+      subject: "Matriz Comercial PX",
+      author: "Provexpress"
+    });
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...purple);
+    doc.setFontSize(9);
+    doc.text("PROVEXPRESS - MATRIZ COMERCIAL PX", pageWidth / 2, 28, { align: "center" });
+    doc.setTextColor(...ink);
+    doc.setFontSize(18);
+    doc.text("Evaluacion de proyectos", pageWidth / 2, 50, { align: "center" });
+    doc.setDrawColor(...purple);
+    doc.setLineWidth(1.5);
+    doc.line(margin, 62, pageWidth - margin, 62);
+
+    doc.autoTable({
+      startY: 72,
+      margin: { left: margin, right: margin },
+      theme: "grid",
+      tableWidth: pageWidth - margin * 2,
+      styles: {
+        font: "helvetica",
+        fontSize: 7.2,
+        cellPadding: 3.5,
+        lineColor: line,
+        lineWidth: 0.5,
+        textColor: ink,
+        minCellHeight: 12
+      },
+      body: [
+        ["Consecutivo", state.consecutivo || "Sin asignar", "Fecha solicitud", state.fechaSolicitud || ""],
+        ["Cliente", state.cliente || "", "Responsable", state.responsable || ""],
+        ["Fase del producto", faseLabels[state.fase] || "", "", ""]
+      ],
+      columnStyles: {
+        0: { fontStyle: "bold", fillColor: paleBlue, cellWidth: 95 },
+        1: { fontStyle: "bold", cellWidth: 175 },
+        2: { fontStyle: "bold", fillColor: paleBlue, cellWidth: 95 },
+        3: { fontStyle: "bold", cellWidth: 175 }
+      }
+    });
+
+    const kpiY = doc.lastAutoTable.finalY + 10;
+    const kpiGap = 7;
+    const kpiWidth = (pageWidth - margin * 2 - kpiGap * 3) / 4;
+    const kpis = [
+      ["Total costos directos", pdfMoney(result.totalCostosDirectos)],
+      ["Valor venta antes de IVA", pdfMoney(result.valorVenta)],
+      ["Valor a facturar", pdfMoney(result.valorFacturar)],
+      ["Utilidad bruta", pdfMoney(result.utilidadBruta)]
+    ];
+
+    kpis.forEach(([title, value], index) => {
+      const x = margin + index * (kpiWidth + kpiGap);
+      doc.setFillColor(...soft);
+      doc.setDrawColor(...line);
+      doc.roundedRect(x, kpiY, kpiWidth, 38, 2, 2, "FD");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.4);
+      doc.setTextColor(...muted);
+      doc.text(title.toUpperCase(), x + 6, kpiY + 12, { maxWidth: kpiWidth - 12 });
+      doc.setFontSize(10);
+      doc.setTextColor(...ink);
+      doc.text(value, x + 6, kpiY + 30, { maxWidth: kpiWidth - 12 });
+    });
+
+    const processY = kpiY + 58;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(...purple);
+    doc.text("PROCESO DEL PRODUCTO", margin, processY - 12);
+
+    const currentPhaseIndex = Math.max(0, faseSteps.findIndex((step) => step.value === String(state.fase)));
+    const startX = margin + 35;
+    const endX = pageWidth - margin - 35;
+    const stepGap = (endX - startX) / (faseSteps.length - 1);
+    doc.setDrawColor(16, 24, 40);
+    doc.setLineWidth(4);
+    doc.line(startX, processY + 16, endX, processY + 16);
+    faseSteps.forEach((step, index) => {
+      const x = startX + index * stepGap;
+      const active = index <= currentPhaseIndex;
+      doc.setDrawColor(...(active ? purple : ink));
+      doc.setFillColor(255, 255, 255);
+      doc.circle(x, processY, 17, "FD");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.setTextColor(...(active ? purple : muted));
+      doc.text(String(index + 1), x, processY + 4, { align: "center" });
+      doc.setFillColor(...(active ? purple : ink));
+      doc.circle(x, processY + 16, 8, "F");
+      doc.setTextColor(...ink);
+      doc.setFontSize(7);
+      doc.text(step.label.toUpperCase(), x, processY + 42, { align: "center", maxWidth: 120 });
+    });
+
+    const tableRows = [
+      { type: "section", concept: "Costos Directos del Proyecto", value: "" },
+      { concept: "Hardware", value: pdfMoney(state.hardware), kind: "money" },
+      { concept: "Obsequios", value: pdfMoney(state.obsequios), kind: "money" },
+      { type: "total", concept: "Total Costos Directos del Proyecto", value: pdfMoney(result.totalCostosDirectos) },
+      { concept: "% Margen Objetivo", value: pdfPercent(asRate(state.margenObjetivo)) },
+      { type: "accent", concept: "Utilidad antes de gastos internos", value: pdfMoney(result.utilidadEsperada) },
+      { type: "total", concept: "Valor de venta del Proyecto Antes de IVA", value: pdfMoney(result.valorVenta) },
+      { concept: "% IVA aplicable", value: pdfPercent(asRate(state.iva)) },
+      { concept: "IVA", value: pdfMoney(result.ivaValor) },
+      { type: "total", concept: "Valor a Facturar", value: pdfMoney(result.valorFacturar) },
+      { type: "section", concept: "Costos Internos", value: "" },
+      { concept: "% Comision de Ventas del comercial", value: pdfPercent(asRate(state.comision)) },
+      { concept: "Comision estimada del Comercial incluida carga prestacional", value: pdfMoney(result.comisionValor) },
+      { concept: "% Impuestos estimados de evaluacion", value: pdfPercent(asRate(state.impuestos)) },
+      { concept: "Valor impuestos estimados sobre valor de venta", value: pdfMoney(result.impuestosValor) },
+      { concept: "Costo fletes", value: pdfMoney(state.fletes) },
+      { concept: "% Imprevistos estimados", value: pdfPercent(asRate(state.imprevistos)) },
+      { concept: "Valor Imprevistos estimados", value: pdfMoney(result.imprevistosValor) },
+      { concept: "Plazo de Credito al cliente en dias", value: String(Number(state.plazoCredito || 0)) },
+      { concept: "% Base de financiacion mensual", value: pdfPercent(asRate(state.baseFinanciacion)) },
+      { concept: "% de financiacion ligado al plazo", value: pdfPercent(result.financiacionPorcentaje) },
+      { concept: "Costo de financiacion para evaluacion", value: pdfMoney(result.financiacionValor) },
+      { type: "total", concept: "Total Costos internos del proyecto", value: pdfMoney(result.totalCostosInternos) },
+      { type: "accent", concept: "Utilidad Bruta Provexpress", value: pdfMoney(result.utilidadBruta) },
+      { concept: "% Margen Bruto Provexpress sobre costos", value: pdfPercent(result.margenSobreCostos) },
+      { type: "accent", concept: "% Margen Bruto Provexpress sobre Valor de Venta", value: pdfPercent(result.margenSobreVenta) }
+    ];
+
+    doc.autoTable({
+      startY: processY + 56,
+      margin: { left: margin, right: margin, bottom: 18 },
+      tableWidth: pageWidth - margin * 2,
+      theme: "grid",
+      columns: [
+        { header: "Concepto", dataKey: "concept" },
+        { header: "Valor", dataKey: "value" }
+      ],
+      body: tableRows,
+      styles: {
+        font: "helvetica",
+        fontSize: 6.3,
+        cellPadding: 2.1,
+        lineColor: line,
+        lineWidth: 0.4,
+        textColor: ink,
+        minCellHeight: 8.5,
+        overflow: "linebreak"
+      },
+      headStyles: {
+        fillColor: purple,
+        textColor: [255, 255, 255],
+        halign: "center",
+        fontStyle: "bold",
+        fontSize: 7
+      },
+      columnStyles: {
+        concept: { cellWidth: 390 },
+        value: { cellWidth: 150, halign: "right", fontStyle: "bold" }
+      },
+      didParseCell(data) {
+        const row = data.row.raw;
+        if (data.section !== "body" || !row) return;
+        if (row.type === "section") {
+          data.cell.styles.fillColor = paleBlue;
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.halign = "center";
+          if (data.column.dataKey === "value") data.cell.text = [""];
+        }
+        if (row.type === "total") {
+          data.cell.styles.fillColor = soft;
+          data.cell.styles.fontStyle = "bold";
+        }
+        if (row.type === "accent") {
+          data.cell.styles.fillColor = purple;
+          data.cell.styles.textColor = [255, 255, 255];
+          data.cell.styles.fontStyle = "bold";
+        }
+      }
+    });
+
+    doc.save(`evaluacion-proyecto-${safeFileName(state.consecutivo || state.cliente || "provexpress")}.pdf`);
+  } catch (error) {
+    document.querySelector("#saveState").textContent = error.message;
+  } finally {
+    if (button) button.disabled = false;
+    if (label) label.textContent = previousText;
+  }
+}
+
 async function exportTable() {
   if (!window.ExcelJS) await loadExcelJs();
 
@@ -954,7 +1194,7 @@ document.addEventListener("DOMContentLoaded", () => {
   bindInputs();
   render();
   document.querySelector("#resetBtn").addEventListener("click", resetValues);
-  document.querySelector("#printBtn").addEventListener("click", () => window.print());
+  document.querySelector("#printBtn").addEventListener("click", exportPdf);
   document.querySelector("#exportBtn").addEventListener("click", exportTable);
   document.querySelector("#saveMatrixBtn").addEventListener("click", saveMatrix);
   document.querySelector("#refreshMatricesBtn").addEventListener("click", loadMatrices);
