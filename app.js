@@ -532,6 +532,7 @@ async function exportPdf() {
     const line = [223, 229, 239];
     const soft = [247, 249, 252];
     const paleBlue = [237, 243, 250];
+    const palePurple = [242, 231, 250];
 
     doc.setProperties({
       title: `Evaluacion ${state.consecutivo || state.cliente || "Provexpress"}`,
@@ -541,13 +542,13 @@ async function exportPdf() {
 
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...purple);
-    doc.setFontSize(9);
+    doc.setFontSize(9.5);
     doc.text("PROVEXPRESS - MATRIZ COMERCIAL PX", pageWidth / 2, 28, { align: "center" });
     doc.setTextColor(...ink);
-    doc.setFontSize(18);
+    doc.setFontSize(19);
     doc.text("Evaluacion de proyectos", pageWidth / 2, 50, { align: "center" });
     doc.setDrawColor(...purple);
-    doc.setLineWidth(1.5);
+    doc.setLineWidth(2);
     doc.line(margin, 62, pageWidth - margin, 62);
 
     doc.autoTable({
@@ -591,23 +592,22 @@ async function exportPdf() {
       const x = margin + index * (kpiWidth + kpiGap);
       doc.setFillColor(...soft);
       doc.setDrawColor(...line);
+      doc.setLineWidth(0.8);
       doc.roundedRect(x, kpiY, kpiWidth, 38, 2, 2, "FD");
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.4);
-      doc.setTextColor(...muted);
+      doc.setFontSize(6.7);
+      doc.setTextColor(...purple);
       doc.text(title.toUpperCase(), x + 6, kpiY + 12, { maxWidth: kpiWidth - 12 });
-      doc.setFontSize(10);
+      doc.setFontSize(10.5);
       doc.setTextColor(...ink);
       doc.text(value, x + 6, kpiY + 30, { maxWidth: kpiWidth - 12 });
     });
 
-    const processY = kpiY + 50;
+    const processY = kpiY + 60;
     const processBoxY = processY - 13;
-    const processBoxHeight = 54;
+    const processBoxHeight = 58;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.6);
-    doc.setTextColor(...purple);
-    doc.text("PROCESO DEL PRODUCTO", margin + 8, processBoxY + 10);
+    doc.setFontSize(8.2);
 
     const currentPhaseIndex = Math.max(0, faseSteps.findIndex((step) => step.value === String(state.fase)));
     const startX = margin + 70;
@@ -619,6 +619,12 @@ async function exportPdf() {
     doc.setDrawColor(...line);
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(margin, processBoxY, pageWidth - margin * 2, processBoxHeight, 3, 3, "S");
+    doc.setFillColor(...palePurple);
+    doc.rect(margin, processBoxY, pageWidth - margin * 2, 14, "F");
+    doc.setDrawColor(...line);
+    doc.line(margin, processBoxY + 14, pageWidth - margin, processBoxY + 14);
+    doc.setTextColor(...purple);
+    doc.text("PROCESO DEL PRODUCTO", margin + 8, processBoxY + 10);
 
     doc.setDrawColor(...line);
     doc.setLineWidth(1.2);
@@ -676,7 +682,7 @@ async function exportPdf() {
     ];
 
     doc.autoTable({
-      startY: processY + 47,
+      startY: processY + 50,
       margin: { left: margin, right: margin, bottom: 18 },
       tableWidth: pageWidth - margin * 2,
       theme: "grid",
@@ -687,12 +693,12 @@ async function exportPdf() {
       body: tableRows,
       styles: {
         font: "helvetica",
-        fontSize: 6.3,
-        cellPadding: 2.1,
+        fontSize: 6.1,
+        cellPadding: 2,
         lineColor: line,
         lineWidth: 0.4,
         textColor: ink,
-        minCellHeight: 8.5,
+        minCellHeight: 8.2,
         overflow: "linebreak"
       },
       headStyles: {
@@ -711,6 +717,7 @@ async function exportPdf() {
         if (data.section !== "body" || !row) return;
         if (row.type === "section") {
           data.cell.styles.fillColor = paleBlue;
+          data.cell.styles.textColor = purple;
           data.cell.styles.fontStyle = "bold";
           data.cell.styles.halign = "center";
           if (data.column.dataKey === "value") data.cell.text = [""];
