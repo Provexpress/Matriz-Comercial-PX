@@ -6,7 +6,7 @@
     <title>Matriz Comercial PX</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
-    <script src="app.js?v=20260502-authlock1" defer></script>
+    <script src="app.js?v=20260504-review1" defer></script>
   </head>
   <body class="auth-pending">
     <section class="auth-gate" id="authGate" aria-label="Inicio de sesion">
@@ -122,14 +122,23 @@
                 <th>Fase</th>
                 <th>Valor venta</th>
                 <th>Utilidad</th>
+                <th>Accion</th>
               </tr>
             </thead>
             <tbody id="matricesList">
-              <tr><td colspan="7">Sin datos cargados</td></tr>
+              <tr><td colspan="8">Sin datos cargados</td></tr>
             </tbody>
           </table>
         </div>
       </section>
+      </section>
+
+      <section class="process-panel app-view" id="evaluationProcess">
+        <div>
+          <p class="eyebrow">Proceso</p>
+          <h2>Fase del producto</h2>
+        </div>
+        <ol class="phase-progress" id="phaseProgress" aria-label="Progreso de fase del producto"></ol>
       </section>
 
       <section class="app-view" id="evaluationViewContent">

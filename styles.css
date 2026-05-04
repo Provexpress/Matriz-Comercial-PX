@@ -97,6 +97,7 @@ select {
 
 .topbar,
 .project-strip,
+.process-panel,
 .records-panel,
 .control-panel,
 .sheet-panel,
@@ -235,6 +236,12 @@ h3 {
   background: var(--purple);
 }
 
+.compact-button {
+  min-height: 34px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
 .icon-button:hover,
 .primary-button:hover {
   transform: translateY(-1px);
@@ -253,6 +260,76 @@ button svg {
   margin-top: 16px;
   padding: 16px;
   border-radius: 8px;
+}
+
+.process-panel {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.process-panel.active {
+  display: flex;
+}
+
+.phase-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: min(720px, 100%);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.phase-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  background: #fff;
+  font-weight: 800;
+}
+
+.phase-step.done,
+.phase-step.current {
+  color: var(--ink);
+  border-color: rgba(112, 48, 160, 0.35);
+  background: #f7f0fc;
+}
+
+.phase-step.current {
+  box-shadow: 0 0 0 3px rgba(112, 48, 160, 0.12);
+}
+
+.phase-dot {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  color: #fff;
+  background: #a9b1c1;
+  font-size: 0.8rem;
+}
+
+.phase-step.done .phase-dot,
+.phase-step.current .phase-dot {
+  background: var(--purple);
+}
+
+.phase-label {
+  min-width: 0;
+  font-size: 0.86rem;
 }
 
 label {
@@ -522,6 +599,11 @@ th:last-child {
     grid-template-columns: 1fr 1fr;
   }
 
+  .process-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .sheet-panel {
     grid-column: 1 / -1;
   }
@@ -540,6 +622,7 @@ th:last-child {
 
   .topbar,
   .project-strip,
+  .process-panel,
   .records-heading,
   .view-tabs,
   .summary-grid {
@@ -563,6 +646,10 @@ th:last-child {
 
   .view-tabs {
     display: grid;
+  }
+
+  .phase-progress {
+    grid-template-columns: 1fr;
   }
 
   .summary-grid {
@@ -601,6 +688,7 @@ th:last-child {
 
   .topbar,
   .project-strip,
+  .process-panel,
   .metric,
   .sheet-panel {
     box-shadow: none;

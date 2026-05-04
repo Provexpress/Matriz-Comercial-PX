@@ -2,6 +2,7 @@ const defaults = {
   fechaSolicitud: "",
   cliente: "",
   responsable: "",
+  consecutivo: "",
   fase: "100000000",
   hardware: "",
   obsequios: "",
@@ -53,6 +54,7 @@ const textFields = ["fechaSolicitud", "cliente", "responsable", "fase"];
 let msalApp = null;
 let currentAccount = null;
 let matrixEntitySetName = null;
+let activeMatrixId = null;
 
 const dataverseConfig = {
   environmentUrl: "https://db-px.crm2.dynamics.com",
@@ -82,6 +84,12 @@ const faseLabels = {
   [faseValues.oferta]: "Oferta",
   [faseValues.cierre]: "Cierre"
 };
+
+const faseSteps = [
+  { value: String(faseValues.solicitudCredito), label: "Solicitud de credito" },
+  { value: String(faseValues.oferta), label: "Oferta" },
+  { value: String(faseValues.cierre), label: "Cierre" }
+];
 
 const currency = new Intl.NumberFormat("es-CO", {
   style: "currency",
@@ -355,6 +363,30 @@ function render() {
   document.querySelector("#kpiFacturar").textContent = currency.format(result.valorFacturar);
   document.querySelector("#kpiUtilidad").textContent = currency.format(result.utilidadBruta);
   document.querySelector(".metric.profit").classList.toggle("negative", result.utilidadBruta < 0);
+  renderPhaseProgress();
+  updateSaveButtonMode();
+}
+
+function renderPhaseProgress() {
+  const progress = document.querySelector("#phaseProgress");
+  if (!progress) return;
+
+  const activeIndex = Math.max(0, faseSteps.findIndex((step) => step.value === String(state.fase)));
+  progress.innerHTML = faseSteps.map((step, index) => {
+    const status = index < activeIndex ? "done" : index === activeIndex ? "current" : "pending";
+    return `
+      <li class="phase-step ${status}">
+        <span class="phase-dot">${index + 1}</span>
+        <span class="phase-label">${escapeHtml(step.label)}</span>
+      </li>
+    `;
+  }).join("");
+}
+
+function updateSaveButtonMode() {
+  const label = document.querySelector("#saveMatrixBtn span");
+  if (!label) return;
+  label.textContent = activeMatrixId ? "Actualizar matriz" : "Guardar matriz";
 }
 
 function bindInputs() {
@@ -373,20 +405,27 @@ function bindInputs() {
     input.value = state[id] ?? "";
     input.addEventListener("input", () => {
       state[id] = input.value;
+      if (id === "fase") renderPhaseProgress();
       saveState();
     });
   });
 }
 
-function resetValues() {
-  state = { ...defaults };
+function syncInputsFromState() {
   Object.entries(fields).forEach(([key, input]) => {
-    input.value = state[key];
+    input.value = state[key] ?? "";
   });
   textFields.forEach((id) => {
-    document.querySelector(`#${id}`).value = state[id] ?? "";
+    const input = document.querySelector(`#${id}`);
+    if (input) input.value = state[id] ?? "";
   });
   render();
+}
+
+function resetValues() {
+  state = { ...defaults };
+  activeMatrixId = null;
+  syncInputsFromState();
   saveState();
 }
 
@@ -394,6 +433,7 @@ function switchView(target) {
   const isEvaluation = target === "evaluationView";
   document.querySelector("#recordsView").classList.toggle("active", !isEvaluation);
   document.querySelector("#evaluationView").classList.toggle("active", isEvaluation);
+  document.querySelector("#evaluationProcess").classList.toggle("active", isEvaluation);
   document.querySelector("#evaluationViewContent").classList.toggle("active", isEvaluation);
   document.body.classList.toggle("app-mode-records", !isEvaluation);
   document.body.classList.toggle("app-mode-evaluation", isEvaluation);
@@ -410,9 +450,11 @@ function startNewMatrix() {
 
 function exportTable() {
   const projectRows = `
+    <tr><th>Consecutivo</th><td>${state.consecutivo || ""}</td></tr>
     <tr><th>Fecha solicitud</th><td>${state.fechaSolicitud || ""}</td></tr>
     <tr><th>Cliente</th><td>${state.cliente || ""}</td></tr>
     <tr><th>Responsable</th><td>${state.responsable || ""}</td></tr>
+    <tr><th>Fase del producto</th><td>${faseLabels[state.fase] || ""}</td></tr>
   `;
   const html = `
     <html><head><meta charset="utf-8"></head><body>
@@ -424,7 +466,7 @@ function exportTable() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `evaluacion-proyecto-${state.cliente || "provexpress"}.xls`;
+  link.download = `evaluacion-proyecto-${state.consecutivo || state.cliente || "provexpress"}.xls`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -434,7 +476,7 @@ function renderMatrices(rows) {
   if (!tbody) return;
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="7">No hay matrices creadas</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8">No hay matrices creadas</td></tr>`;
     return;
   }
 
@@ -453,18 +495,26 @@ function renderMatrices(rows) {
       </td>
       <td>${currency.format(Number(row.valorVenta || 0))}</td>
       <td>${currency.format(Number(row.utilidadBruta || 0))}</td>
+      <td>
+        <button class="icon-button compact-button" type="button" data-review-matrix="${escapeHtml(row.id)}" title="Revisar matriz">
+          <i data-lucide="eye"></i>
+          <span>Revisar</span>
+        </button>
+      </td>
     </tr>
   `).join("");
+
+  if (window.lucide) window.lucide.createIcons();
 }
 
 async function loadMatrices(options = {}) {
   const tbody = document.querySelector("#matricesList");
-  if (tbody) tbody.innerHTML = `<tr><td colspan="7">Cargando...</td></tr>`;
+  if (tbody) tbody.innerHTML = `<tr><td colspan="8">Cargando...</td></tr>`;
 
   try {
     const entitySet = await getMatrixEntitySetName(options);
     const query = [
-      "$select=px_matrizcomercialid,px_consecutivo,px_cliente,px_responsable,px_fechasolicitud,px_estado,px_fase,px_valorventa,px_valorfacturar,px_utilidadbruta",
+      "$select=px_matrizcomercialid,px_consecutivo,px_cliente,px_responsable,px_fechasolicitud,px_estado,px_fase,px_hardware,px_obsequios,px_margenobjetivo,px_fletes,px_plazocredito,px_valorventa,px_valorfacturar,px_utilidadbruta",
       "$orderby=createdon desc",
       "$top=25"
     ].join("&");
@@ -473,13 +523,13 @@ async function loadMatrices(options = {}) {
     }, options);
     renderMatrices(data.value.map(toMatrixRow));
   } catch (error) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message)}</td></tr>`;
   }
 }
 
 async function syncOnStartup() {
   const tbody = document.querySelector("#matricesList");
-  if (tbody) tbody.innerHTML = `<tr><td colspan="7">Sincronizando...</td></tr>`;
+  if (tbody) tbody.innerHTML = `<tr><td colspan="8">Sincronizando...</td></tr>`;
 
   try {
     await loadMsal();
@@ -487,7 +537,7 @@ async function syncOnStartup() {
     currentAccount = app.getAllAccounts()[0] || null;
 
     if (!currentAccount) {
-      if (tbody) tbody.innerHTML = `<tr><td colspan="7">Conecta con Microsoft para sincronizar matrices</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="8">Conecta con Microsoft para sincronizar matrices</td></tr>`;
       updateAuthStatus("Conecta con Microsoft para continuar");
       return;
     }
@@ -497,7 +547,7 @@ async function syncOnStartup() {
     setAuthenticatedUi();
     await loadMatrices({ interactive: false });
   } catch (error) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message)}</td></tr>`;
     updateAuthStatus(error.message);
   }
 }
@@ -512,6 +562,11 @@ function toMatrixRow(row) {
     estado: row["px_estado@OData.Community.Display.V1.FormattedValue"] ?? row.px_estado,
     fase: faseLabels[row.px_fase] ?? row["px_fase@OData.Community.Display.V1.FormattedValue"] ?? row.px_fase,
     faseValue: row.px_fase,
+    hardware: row.px_hardware,
+    obsequios: row.px_obsequios,
+    margenObjetivo: row.px_margenobjetivo,
+    fletes: row.px_fletes,
+    plazoCredito: row.px_plazocredito,
     valorVenta: row.px_valorventa,
     valorFacturar: row.px_valorfacturar,
     utilidadBruta: row.px_utilidadbruta
@@ -553,12 +608,62 @@ function buildDataversePayload(input) {
   };
 }
 
+function stateFromMatrixRow(row) {
+  return {
+    ...defaults,
+    consecutivo: row.consecutivo || "",
+    fechaSolicitud: row.fechaSolicitud || "",
+    cliente: row.cliente || "",
+    responsable: row.responsable || "",
+    fase: String(row.faseValue || faseValues.solicitudCredito),
+    hardware: row.hardware ?? "",
+    obsequios: row.obsequios ?? "",
+    margenObjetivo: row.margenObjetivo ?? "",
+    fletes: row.fletes ?? "",
+    plazoCredito: row.plazoCredito ?? ""
+  };
+}
+
+async function reviewMatrix(recordId) {
+  if (!recordId) return;
+
+  const entitySet = await getMatrixEntitySetName();
+  const query = "$select=px_matrizcomercialid,px_consecutivo,px_cliente,px_responsable,px_fechasolicitud,px_estado,px_fase,px_hardware,px_obsequios,px_margenobjetivo,px_fletes,px_plazocredito,px_valorventa,px_valorfacturar,px_utilidadbruta";
+  const row = await dataverseRequest("GET", `${entitySet}(${recordId})?${query}`, null, {
+    Prefer: 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'
+  });
+
+  activeMatrixId = recordId;
+  state = stateFromMatrixRow(toMatrixRow(row));
+  syncInputsFromState();
+  document.querySelector("#saveState").textContent = `Revisando ${state.consecutivo || "matriz"}`;
+  switchView("evaluationView");
+}
+
 async function updateMatrixPhase(recordId, phaseValue) {
   if (!recordId) throw new Error("No se encontro la matriz para actualizar");
   const entitySet = await getMatrixEntitySetName();
   await dataverseRequest("PATCH", `${entitySet}(${recordId})`, {
     px_fase: Number(phaseValue)
   });
+}
+
+async function handleReviewClick(event) {
+  const button = event.target.closest("[data-review-matrix]");
+  if (!button) return;
+
+  const previousText = button.querySelector("span").textContent;
+  button.disabled = true;
+  button.querySelector("span").textContent = "Abriendo...";
+
+  try {
+    await reviewMatrix(button.dataset.reviewMatrix);
+  } catch (error) {
+    document.querySelector("#saveState").textContent = error.message;
+  } finally {
+    button.disabled = false;
+    button.querySelector("span").textContent = previousText;
+  }
 }
 
 async function handlePhaseChange(event) {
@@ -589,12 +694,18 @@ async function saveMatrix() {
 
   try {
     const entitySet = await getMatrixEntitySetName();
-    const consecutivo = await nextConsecutive(entitySet);
-    await dataverseRequest("POST", entitySet, {
-      px_consecutivo: consecutivo,
-      ...buildDataversePayload(state)
-    });
-    document.querySelector("#saveState").textContent = `Guardada ${consecutivo}`;
+    if (activeMatrixId) {
+      await dataverseRequest("PATCH", `${entitySet}(${activeMatrixId})`, buildDataversePayload(state));
+      document.querySelector("#saveState").textContent = `Actualizada ${state.consecutivo || "matriz"}`;
+    } else {
+      const consecutivo = await nextConsecutive(entitySet);
+      state.consecutivo = consecutivo;
+      await dataverseRequest("POST", entitySet, {
+        px_consecutivo: consecutivo,
+        ...buildDataversePayload(state)
+      });
+      document.querySelector("#saveState").textContent = `Guardada ${consecutivo}`;
+    }
     await loadMatrices();
     switchView("recordsView");
   } catch (error) {
@@ -617,6 +728,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelector("#authConnectBtn").addEventListener("click", connectMicrosoft);
   document.querySelector("#newMatrixBtn").addEventListener("click", startNewMatrix);
   document.querySelector("#matricesList").addEventListener("change", handlePhaseChange);
+  document.querySelector("#matricesList").addEventListener("click", handleReviewClick);
   document.querySelectorAll("[data-view-target]").forEach((button) => {
     button.addEventListener("click", () => switchView(button.dataset.viewTarget));
   });
