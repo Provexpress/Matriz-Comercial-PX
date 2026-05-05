@@ -55,6 +55,7 @@ let msalApp = null;
 let currentAccount = null;
 let matrixEntitySetName = null;
 let activeMatrixId = null;
+let currentDataverseUser = null;
 
 const dataverseConfig = {
   environmentUrl: "https://db-px.crm2.dynamics.com",
@@ -62,6 +63,12 @@ const dataverseConfig = {
   clientId: "ffcf61c2-18a2-4be4-a753-c81934026e4d",
   tableLogicalName: "px_matrizcomercial"
 };
+
+const globalMatrixUsers = new Set([
+  "especialista.preventa@provexpress.com.co",
+  "c.estrategica@provexpress.com.co",
+  "juannovoa@provexpress.com.co"
+]);
 
 const estadoValues = {
   borrador: 100000000,
@@ -124,6 +131,29 @@ function getAuthRedirectUri() {
   if (path.endsWith("/index.html")) path = path.slice(0, -"/index.html".length) || "/";
   if (!path.endsWith("/")) path += "/";
   return origin + path;
+}
+
+function getCurrentAccountEmail() {
+  const claims = currentAccount?.idTokenClaims || {};
+  return String(
+    claims.preferred_username ||
+    claims.email ||
+    claims.upn ||
+    currentAccount?.username ||
+    ""
+  ).trim().toLowerCase();
+}
+
+function canSeeGlobalMatrices() {
+  return globalMatrixUsers.has(getCurrentAccountEmail());
+}
+
+function updateRoleVisibility() {
+  const restricted = Boolean(currentAccount) && !canSeeGlobalMatrices();
+  document.body.classList.toggle("restricted-user", restricted);
+  document.querySelectorAll("[data-sensitive-row]").forEach((row) => {
+    row.hidden = restricted;
+  });
 }
 
 function initMsal() {
@@ -230,6 +260,7 @@ async function connectMicrosoft() {
       updateConnectionLabel(name);
       updateAuthStatus(`Conectado como ${name}`);
     }
+    updateRoleVisibility();
     setAuthenticatedUi();
     await loadMatrices();
   } catch (error) {
@@ -280,6 +311,39 @@ async function getMatrixEntitySetName(options = {}) {
   );
   matrixEntitySetName = data.EntitySetName;
   return matrixEntitySetName;
+}
+
+async function getCurrentDataverseUserId(options = {}) {
+  const email = getCurrentAccountEmail();
+  if (currentDataverseUser?.email === email && currentDataverseUser?.id) {
+    return currentDataverseUser.id;
+  }
+
+  const data = await dataverseRequest(
+    "GET",
+    "WhoAmI()",
+    null,
+    {},
+    options
+  );
+  if (!data?.UserId) throw new Error("No se pudo identificar el usuario conectado en Dataverse");
+
+  currentDataverseUser = { email, id: data.UserId };
+  return currentDataverseUser.id;
+}
+
+async function getMatrixVisibilityFilter(options = {}) {
+  if (canSeeGlobalMatrices()) return "";
+  const userId = await getCurrentDataverseUserId(options);
+  return `_createdby_value eq ${userId}`;
+}
+
+async function assertCanOpenMatrix(row, options = {}) {
+  if (canSeeGlobalMatrices()) return;
+  const userId = await getCurrentDataverseUserId(options);
+  if (row.createdById && String(row.createdById).toLowerCase() !== String(userId).toLowerCase()) {
+    throw new Error("Esta matriz pertenece a otro usuario");
+  }
 }
 
 function calculate() {
@@ -1017,21 +1081,24 @@ function renderMatrices(rows) {
 
 async function loadMatrices(options = {}) {
   const tbody = document.querySelector("#matricesList");
-  if (tbody) tbody.innerHTML = `<tr><td colspan="8">Cargando...</td></tr>`;
+  if (tbody) tbody.innerHTML = `<tr><td colspan="7">Cargando...</td></tr>`;
 
   try {
     const entitySet = await getMatrixEntitySetName(options);
-    const query = [
-      "$select=px_matrizcomercialid,px_consecutivo,px_cliente,px_responsable,px_fechasolicitud,px_estado,px_fase,px_hardware,px_obsequios,px_margenobjetivo,px_fletes,px_plazocredito,px_valorventa,px_valorfacturar,px_utilidadbruta",
+    const visibilityFilter = await getMatrixVisibilityFilter(options);
+    const queryParts = [
+      "$select=px_matrizcomercialid,px_consecutivo,px_cliente,px_responsable,px_fechasolicitud,px_estado,px_fase,px_hardware,px_obsequios,px_margenobjetivo,px_fletes,px_plazocredito,px_valorventa,px_valorfacturar,px_utilidadbruta,_createdby_value",
       "$orderby=createdon desc",
       "$top=25"
-    ].join("&");
+    ];
+    if (visibilityFilter) queryParts.splice(1, 0, `$filter=${visibilityFilter}`);
+    const query = queryParts.join("&");
     const data = await dataverseRequest("GET", `${entitySet}?${query}`, null, {
       Prefer: 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'
     }, options);
     renderMatrices(data.value.map(toMatrixRow));
   } catch (error) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message)}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
   }
 }
 
@@ -1052,10 +1119,11 @@ async function syncOnStartup() {
 
     updateConnectionLabel(currentAccount.name || currentAccount.username || "Conectado");
     updateAuthStatus("Sincronizando matrices...");
+    updateRoleVisibility();
     setAuthenticatedUi();
     await loadMatrices({ interactive: false });
   } catch (error) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="8">${escapeHtml(error.message)}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7">${escapeHtml(error.message)}</td></tr>`;
     updateAuthStatus(error.message);
   }
 }
@@ -1063,6 +1131,7 @@ async function syncOnStartup() {
 function toMatrixRow(row) {
   return {
     id: row.px_matrizcomercialid,
+    createdById: row._createdby_value,
     consecutivo: row.px_consecutivo,
     cliente: row.px_cliente,
     responsable: row.px_responsable,
@@ -1136,13 +1205,15 @@ async function reviewMatrix(recordId) {
   if (!recordId) return;
 
   const entitySet = await getMatrixEntitySetName();
-  const query = "$select=px_matrizcomercialid,px_consecutivo,px_cliente,px_responsable,px_fechasolicitud,px_estado,px_fase,px_hardware,px_obsequios,px_margenobjetivo,px_fletes,px_plazocredito,px_valorventa,px_valorfacturar,px_utilidadbruta";
+  const query = "$select=px_matrizcomercialid,px_consecutivo,px_cliente,px_responsable,px_fechasolicitud,px_estado,px_fase,px_hardware,px_obsequios,px_margenobjetivo,px_fletes,px_plazocredito,px_valorventa,px_valorfacturar,px_utilidadbruta,_createdby_value";
   const row = await dataverseRequest("GET", `${entitySet}(${recordId})?${query}`, null, {
     Prefer: 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'
   });
+  const matrixRow = toMatrixRow(row);
+  await assertCanOpenMatrix(matrixRow);
 
   activeMatrixId = recordId;
-  state = stateFromMatrixRow(toMatrixRow(row));
+  state = stateFromMatrixRow(matrixRow);
   syncInputsFromState();
   document.querySelector("#saveState").textContent = `Revisando ${state.consecutivo || "matriz"}`;
   switchView("evaluationView");

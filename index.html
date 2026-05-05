@@ -7,7 +7,7 @@
     <link rel="icon" type="image/png" href="assets/icono-provexpress.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js" defer></script>
-    <script src="app.js?v=20260504-pdf-hidden1" defer></script>
+    <script src="app.js?v=20260505-roles1" defer></script>
   </head>
   <body class="auth-pending">
     <section class="auth-gate" id="authGate" aria-label="Inicio de sesion">
@@ -222,11 +222,11 @@
                 <tr class="editable-row"><td>% Margen Objetivo</td><td data-out="margenObjetivo"></td></tr>
                 <tr class="accent-row"><td>Utilidad antes de gastos internos</td><td data-out="utilidadEsperada"></td></tr>
                 <tr class="total-row"><td>Valor de venta del Proyecto Antes de IVA</td><td data-out="valorVenta"></td></tr>
-                <tr><td>% IVA aplicable</td><td data-out="iva"></td></tr>
+                <tr data-sensitive-row><td>% IVA aplicable</td><td data-out="iva"></td></tr>
                 <tr><td>IVA</td><td data-out="ivaValor"></td></tr>
                 <tr class="total-row"><td>Valor a Facturar</td><td data-out="valorFacturar"></td></tr>
                 <tr class="section-row"><th colspan="2">Costos Internos</th></tr>
-                <tr class="note-row">
+                <tr class="note-row" data-sensitive-row>
                   <td>
                     % Comisión de Ventas del comercial
                     <small class="field-note">Porcentaje usado para estimar el costo comercial total sobre la utilidad esperada. Puede incluir comisión base, carga prestacional, seguridad social, parafiscales y una provisión interna asociada al pago comercial.</small>
@@ -234,7 +234,7 @@
                   <td data-out="comision"></td>
                 </tr>
                 <tr><td>Comisión estimada del Comercial incluida carga prestacional</td><td data-out="comisionValor"></td></tr>
-                <tr class="note-row">
+                <tr class="note-row" data-sensitive-row>
                   <td>
                     % Impuestos estimados de evaluación
                     <small class="field-note">Provisión comercial para cubrir impuestos/transacciones como retenciones, ICA, GMF/4x1000 u otros costos tributarios indirectos que afectan la rentabilidad del proyecto.</small>
@@ -243,7 +243,7 @@
                 </tr>
                 <tr><td>Valor impuestos estimados sobre valor de venta</td><td data-out="impuestosValor"></td></tr>
                 <tr class="editable-row"><td>Costo fletes</td><td data-out="fletes"></td></tr>
-                <tr class="note-row">
+                <tr class="note-row" data-sensitive-row>
                   <td>
                     % Imprevistos estimados
                     <small class="field-note">Porcentaje fijo usado como provisión mínima para cubrir variaciones menores o costos no previstos durante la ejecución del proyecto. Actualmente equivale al 0,02% del valor de venta antes de IVA.</small>
@@ -252,7 +252,7 @@
                 </tr>
                 <tr><td>Valor Imprevistos estimados</td><td data-out="imprevistosValor"></td></tr>
                 <tr class="editable-row"><td>Plazo de Crédito al cliente en días</td><td data-out="plazoCredito"></td></tr>
-                <tr class="note-row">
+                <tr class="note-row" data-sensitive-row>
                   <td>
                     % Base de financiación mensual
                     <small class="field-note">Porcentaje fijo usado para estimar el costo financiero mensual cuando el plazo de crédito al cliente supera 60 días. Se aplica proporcionalmente sobre los días adicionales del plazo.</small>
